@@ -32,6 +32,17 @@ else()
   message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
 endif()
 
+### Helper macros ####
+MACRO(INSTALL_HEADERS_WITH_DIRECTORY HEADER_LIST)
+
+FOREACH(HEADER ${${HEADER_LIST}})
+STRING(REGEX MATCH "(.*)[/\\]" DIR ${HEADER})
+INSTALL(FILES ${HEADER} DESTINATION include/${DIR})
+ENDFOREACH(HEADER)
+
+ENDMACRO(INSTALL_HEADERS_WITH_DIRECTORY)
+
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 set(GLOBAL_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -115,7 +126,7 @@ find_package(Glog REQUIRED)
 # find_package(CURL REQUIRED)
 # find_package(Iconv REQUIRED)
 
-set(PUBLIC_LIBRARIES
+set(LIGHTSCAN_LIBRARIES
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogle_storage_api.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_oauth2.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_jsoncpp.a"
@@ -124,10 +135,7 @@ set(PUBLIC_LIBRARIES
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_curl_http.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_utils.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_internal.a"
-  "${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a")
-
-set(LIGHTSCAN_LIBRARIES
-  ${PUBLIC_LIBRARIES}
+  "${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a"
   "${GLOG_LIBRARIES}"
   "${CURL_LIBRARIES}"
   "${OPENSSL_LIBRARIES}"
@@ -153,3 +161,25 @@ add_library(storage
 if(UNIX)
   set(PLATFORM_LINK_FLAGS "-pthread -ldl -lrt")
 endif()
+
+set(PUBLIC_HEADER_FILES
+  storage/storage_backend.h
+  storage/storage_config.h)
+
+
+install(TARGETS storage
+  EXPORT StorageTarget
+  ARCHIVE DESTINATION lib)
+
+set(STORAGE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorage.a")
+
+configure_file(cmake/StorageConfig.cmake.in
+  "${PROJECT_BINARY_DIR}/cmake/StorageConfig.cmake" @ONLY)
+
+install(FILES "${PROJECT_BINARY_DIR}/cmake/StorageConfig.cmake"
+  DESTINATION cmake)
+
+install_headers_with_directory(PUBLIC_HEADER_FILES)
+
+install(EXPORT StorageTarget
+  DESTINATION cmake)
