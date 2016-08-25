@@ -16,7 +16,8 @@
 #pragma once
 
 #include "storage/storage_config.h"
-#include "storage/util.h"
+
+#include <glog/logging.h>
 
 #include <vector>
 #include <string>
@@ -128,8 +129,8 @@ void exit_on_error(StoreResult result);
   do {                                                                  \
     int sleep_debt__ = 1;                                               \
     while (true) {                                                      \
-      const StoreResult result__ = (expression__);                      \
-      if (result__ == StoreResult::TransientFailure) {                  \
+      const storage::StoreResult result__ = (expression__);             \
+      if (result__ == storage::StoreResult::TransientFailure) {         \
         double sleep_time__ =                                           \
           (sleep_debt__ + (static_cast<double>(rand()) / RAND_MAX));    \
         if (sleep_debt__ < 64) {                                        \
@@ -149,12 +150,12 @@ void exit_on_error(StoreResult result);
   } while (0);
 
 
-#define RETURN_ON_ERROR(expression)             \
-  do {                                          \
-    const StoreResult result = (expression);    \
-    if (result != StoresResult::Success) {      \
-      return result;                            \
-    }                                           \
+#define RETURN_ON_ERROR(expression)                     \
+  do {                                                  \
+    const storage::StoreResult result = (expression);   \
+    if (result != storage::StoresResult::Success) {     \
+      return result;                                    \
+    }                                                   \
   } while (0);
 
 }

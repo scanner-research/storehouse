@@ -16,6 +16,7 @@
 #pragma once
 
 #include <string>
+#include <string.h>
 #include <sys/stat.h>   /* mkdir(2), mode_t */
 #include <libgen.h>
 

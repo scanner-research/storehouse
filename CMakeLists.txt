@@ -90,7 +90,7 @@ ExternalProject_Add(JsonCpp
 ExternalProject_Add(GoogleAPICppClient
   DEPENDS JsonCpp
   GIT_REPOSITORY "https://github.com/abpoms/google-api-cpp-client.git"
-  GIT_TAG "0f6cd03b33ed6a863a6d8d1a30eade4b7766835a"
+  GIT_TAG "002b66c3ca8f49385ea13c7967329542f36c1c2e"
 
   UPDATE_COMMAND ""
 
@@ -106,8 +106,6 @@ ExternalProject_Add(GoogleAPICppClient
       -DCMAKE_LIBRARY_PATH=${CMAKE_LIBRARY_PATH}
       -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
-      -DCURL_INCLUDE_DIR=${CURL_INCLUDE_DIR}
-      -DCURL_LIBRARIES=${CURL_LIBRARIES}
 
   CMAKE_CACHE_ARGS
       -DJSONCPP_INCLUDE_DIRS:FILEPATH=${THIRDPARTY_SOURCE_DIR}/jsoncpp/include
@@ -116,6 +114,9 @@ ExternalProject_Add(GoogleAPICppClient
       -DGFLAGS_ROOT_DIR:FILEPATH=${GFLAGS_ROOT_DIR}
       -DOPENSSL_ROOT_DIR:FILEPATH=${OPENSSL_ROOT_DIR}
       -DBOOST_ROOT:FILEPATH=${BOOST_ROOT}
+      -DCURL_INCLUDE_DIR:FILEPATH=${CURL_INCLUDE_DIR}
+      -DCURL_LIBRARY:FILEPATH=${CURL_LIBRARY}
+      -DCURL_LIBRARIES:FILEPATH=${CURL_LIBRARIES}
 )
 
 # googletest
@@ -141,7 +142,7 @@ set(GTEST_LIBRARIES
 set(GTEST_LIB_MAIN
   "${GLOBAL_OUTPUT_PATH}/googletest/lib/libgtest_main.a")
 
-set(LIGHTSCAN_LIBRARIES
+set(CUSTOM_LIBRARIES
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogle_storage_api.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_oauth2.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_jsoncpp.a"
@@ -150,11 +151,14 @@ set(LIGHTSCAN_LIBRARIES
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_curl_http.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_utils.a"
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_internal.a"
-  "${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a"
+  "${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a")
+
+set(STORAGE_LIBRARIES
+  "${CUSTOM_LIBRARIES}"
   "${GLOG_LIBRARIES}"
   "${CURL_LIBRARIES}"
   "${OPENSSL_LIBRARIES}"
-  "${LIGHTSCAN_LIBRARIES}")
+  "${STORAGE_LIBRARIES}")
 
 include_directories(
   "."
@@ -172,6 +176,9 @@ add_library(storage
   $<TARGET_OBJECTS:gcs_storage_lib>
   $<TARGET_OBJECTS:posix_storage_lib>)
 
+target_link_libraries(storage
+  "${STORAGE_LIBRARIES}")
+
 if(UNIX)
   set(PLATFORM_LINK_FLAGS "-pthread -ldl -lrt")
 endif()
@@ -185,7 +192,12 @@ install(TARGETS storage
   EXPORT StorageTarget
   ARCHIVE DESTINATION lib)
 
+install(TARGETS ${CUSTOM_LIBRARIES}
+  DESTINATION lib)
+
+
 set(STORAGE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorage.a")
+set(STORAGE_LIBRARIES ${CUSTOM_LIBRARIES})
 
 configure_file(cmake/StorageConfig.cmake.in
   "${PROJECT_BINARY_DIR}/cmake/StorageConfig.cmake" @ONLY)
