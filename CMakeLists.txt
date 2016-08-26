@@ -192,7 +192,7 @@ install(TARGETS storage
   EXPORT StorageTarget
   ARCHIVE DESTINATION lib)
 
-install(TARGETS ${CUSTOM_LIBRARIES}
+install(FILES ${CUSTOM_LIBRARIES}
   DESTINATION lib)
 
 
