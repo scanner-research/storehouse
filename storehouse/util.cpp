@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "storage/util.h"
+#include "storehouse/util.h"
 
 #include <limits.h>     /* PATH_MAX */
 #include <sys/stat.h>   /* mkdir(2) */
@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-namespace storage {
+namespace storehouse {
 
 // Stolen from https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950
 int mkdir_p(const char *path, mode_t mode) {

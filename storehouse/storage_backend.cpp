@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include "storage/storage_backend.h"
-#include "storage/gcs/gcs_storage.h"
-#include "storage/posix/posix_storage.h"
-#include "storage/util.h"
+#include "storehouse/storage_backend.h"
+#include "storehouse/gcs/gcs_storage.h"
+#include "storehouse/posix/posix_storage.h"
+#include "storehouse/util.h"
 
 #include <cstdlib>
 
-namespace storage {
+namespace storehouse {
 
 StoreResult RandomReadFile::read(
   uint64_t offset,

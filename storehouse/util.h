@@ -20,7 +20,7 @@
 #include <sys/stat.h>   /* mkdir(2), mode_t */
 #include <libgen.h>
 
-namespace storage {
+namespace storehouse {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Path utils

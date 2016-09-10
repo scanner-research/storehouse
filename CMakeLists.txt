@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.4.0 FATAL_ERROR)
 
-project(Storage)
+project(Storehouse)
 
 enable_testing()
 
@@ -153,12 +153,12 @@ set(CUSTOM_LIBRARIES
   "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_internal.a"
   "${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a")
 
-set(STORAGE_LIBRARIES
+set(STOREHOUSE_LIBRARIES
   "${CUSTOM_LIBRARIES}"
   "${GLOG_LIBRARIES}"
   "${CURL_LIBRARIES}"
   "${OPENSSL_LIBRARIES}"
-  "${STORAGE_LIBRARIES}")
+  "${STOREHOUSE_LIBRARIES}")
 
 include_directories(
   "."
@@ -167,45 +167,45 @@ include_directories(
   "${GLOG_INCLUDE_DIRS}"
   "${GTEST_INCLUDE_DIRS}")
 
-add_subdirectory(storage)
+add_subdirectory(storehouse)
 
-add_library(storage
-  storage/storage_backend.cpp
-  storage/storage_config.cpp
-  storage/util.cpp
+add_library(storehouse
+  storehouse/storage_backend.cpp
+  storehouse/storage_config.cpp
+  storehouse/util.cpp
   $<TARGET_OBJECTS:gcs_storage_lib>
   $<TARGET_OBJECTS:posix_storage_lib>)
 
-target_link_libraries(storage
-  "${STORAGE_LIBRARIES}")
+target_link_libraries(storehouse
+  "${STOREHOUSE_LIBRARIES}")
 
 if(UNIX)
   set(PLATFORM_LINK_FLAGS "-pthread -ldl -lrt")
 endif()
 
 set(PUBLIC_HEADER_FILES
-  storage/storage_backend.h
-  storage/storage_config.h)
+  storehouse/storage_backend.h
+  storehouse/storage_config.h)
 
 
-install(TARGETS storage
-  EXPORT StorageTarget
+install(TARGETS storehouse
+  EXPORT StorehouseTarget
   ARCHIVE DESTINATION lib)
 
 install(FILES ${CUSTOM_LIBRARIES}
   DESTINATION lib)
 
 
-set(STORAGE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorage.a")
-set(STORAGE_LIBRARIES ${CUSTOM_LIBRARIES})
+set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.a")
+set(STOREHOUSE_LIBRARIES ${CUSTOM_LIBRARIES})
 
-configure_file(cmake/StorageConfig.cmake.in
-  "${PROJECT_BINARY_DIR}/cmake/StorageConfig.cmake" @ONLY)
+configure_file(cmake/StorehouseConfig.cmake.in
+  "${PROJECT_BINARY_DIR}/cmake/StorehouseConfig.cmake" @ONLY)
 
-install(FILES "${PROJECT_BINARY_DIR}/cmake/StorageConfig.cmake"
+install(FILES "${PROJECT_BINARY_DIR}/cmake/StorehouseConfig.cmake"
   DESTINATION cmake)
 
 install_headers_with_directory(PUBLIC_HEADER_FILES)
 
-install(EXPORT StorageTarget
+install(EXPORT StorehouseTarget
   DESTINATION cmake)

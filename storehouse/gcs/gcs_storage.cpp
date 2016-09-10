@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "storage/gcs/gcs_storage.h"
-#include "storage/util.h"
+#include "storehouse/gcs/gcs_storage.h"
+#include "storehouse/util.h"
 
 #include "googleapis/client/auth/file_credential_store.h"
 #include "googleapis/client/auth/oauth2_authorization.h"
@@ -51,7 +51,7 @@ using googleapis::client::OAuth2Credential;
 using google_storage_api::ObjectsResource_InsertMethod;
 using google_storage_api::ObjectsResource_GetMethod;
 
-namespace storage {
+namespace storehouse {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// GCSRandomReadFile

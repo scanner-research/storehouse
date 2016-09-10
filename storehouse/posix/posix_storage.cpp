@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "storage/posix/posix_storage.h"
-#include "storage/util.h"
+#include "storehouse/posix/posix_storage.h"
+#include "storehouse/util.h"
 
 #include <glog/logging.h>
 
@@ -23,7 +23,7 @@
 #include <cstdlib>
 #include <sys/stat.h>
 
-namespace storage {
+namespace storehouse {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// PosixRandomReadFile

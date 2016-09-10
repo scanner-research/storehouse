@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include "storage/storage_backend.h"
-#include "storage/storage_config.h"
+#include "storehouse/storage_backend.h"
+#include "storehouse/storage_config.h"
 
-namespace storage {
+namespace storehouse {
 
 struct PosixConfig : public StorageConfig {
   std::string data_directory;

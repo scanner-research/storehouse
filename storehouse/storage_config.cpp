@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#include "storage/storage_config.h"
-#include "storage/gcs/gcs_storage.h"
-#include "storage/posix/posix_storage.h"
+#include "storehouse/storage_config.h"
+#include "storehouse/gcs/gcs_storage.h"
+#include "storehouse/posix/posix_storage.h"
 
-namespace storage {
+namespace storehouse {
 
 StorageConfig *StorageConfig::make_gcs_config(
   const std::string &certificates_path,

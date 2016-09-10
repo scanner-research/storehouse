@@ -18,7 +18,7 @@
 #include <string>
 #include <memory>
 
-namespace storage {
+namespace storehouse {
 
 class StorageConfig {
  public:

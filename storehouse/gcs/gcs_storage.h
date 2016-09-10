@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include "storage/storage_config.h"
-#include "storage/storage_backend.h"
+#include "storehouse/storage_config.h"
+#include "storehouse/storage_backend.h"
 
 #include "googleapis/client/transport/http_transport.h"
 #include "googleapis/client/auth/oauth2_service_authorization.h"
@@ -25,7 +25,7 @@
 
 #include <string>
 
-namespace storage {
+namespace storehouse {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// GCSConfig
