@@ -129,8 +129,8 @@ void exit_on_error(StoreResult result);
   do {                                                                  \
     int sleep_debt__ = 1;                                               \
     while (true) {                                                      \
-      const storage::StoreResult result__ = (expression__);             \
-      if (result__ == storage::StoreResult::TransientFailure) {         \
+      const storehouse::StoreResult result__ = (expression__);             \
+      if (result__ == storehouse::StoreResult::TransientFailure) {         \
         double sleep_time__ =                                           \
           (sleep_debt__ + (static_cast<double>(rand()) / RAND_MAX));    \
         if (sleep_debt__ < 64) {                                        \
@@ -152,8 +152,8 @@ void exit_on_error(StoreResult result);
 
 #define RETURN_ON_ERROR(expression)                     \
   do {                                                  \
-    const storage::StoreResult result = (expression);   \
-    if (result != storage::StoresResult::Success) {     \
+    const storehouse::StoreResult result = (expression);   \
+    if (result != storehouse::StoresResult::Success) {     \
       return result;                                    \
     }                                                   \
   } while (0);

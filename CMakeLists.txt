@@ -187,7 +187,6 @@ set(PUBLIC_HEADER_FILES
   storehouse/storage_backend.h
   storehouse/storage_config.h)
 
-
 install(TARGETS storehouse
   EXPORT StorehouseTarget
   ARCHIVE DESTINATION lib)
