@@ -54,7 +54,7 @@ public:
   StoreResult read(
     uint64_t offset,
     size_t size,
-    char* data,
+    uint8_t* data,
     size_t& size_read) override
   {
     if (position_ != offset) {
@@ -68,7 +68,7 @@ public:
       position_ = offset;
     }
 
-    size_read = fread(data, sizeof(char), size, fp_);
+    size_read = fread(data, sizeof(uint8_t), size, fp_);
     position_ += size_read;
 
     if (ferror(fp_)) {
@@ -138,8 +138,8 @@ public:
     }
   }
 
-  StoreResult append(size_t size, const char* data) override {
-    size_t size_written = fwrite(data, sizeof(char), size, fp_);
+  StoreResult append(size_t size, const uint8_t* data) override {
+    size_t size_written = fwrite(data, sizeof(uint8_t), size, fp_);
     if (size_written != size) {
       LOG(FATAL) << "PosixWriteFile: did not write all " << size << " "
                  << "bytes for file " << file_path_.c_str() << ".";

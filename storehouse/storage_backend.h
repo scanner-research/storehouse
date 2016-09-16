@@ -53,12 +53,12 @@ public:
   StoreResult read(
     uint64_t offset,
     size_t size,
-    std::vector<char>& data);
+    std::vector<uint8_t>& data);
 
   virtual StoreResult read(
     uint64_t offset,
     size_t size,
-    char* data,
+    uint8_t* data,
     size_t& size_read) = 0;
 
   virtual StoreResult get_size(uint64_t& size) = 0;
@@ -70,9 +70,9 @@ class WriteFile {
 public:
   virtual ~WriteFile() {};
 
-  StoreResult append(const std::vector<char>& data);
+  StoreResult append(const std::vector<uint8_t>& data);
 
-  virtual StoreResult append(size_t size, const char* data) = 0;
+  virtual StoreResult append(size_t size, const uint8_t* data) = 0;
 
   virtual StoreResult save() = 0;
 };
@@ -121,7 +121,7 @@ StoreResult make_unique_write_file(
   const std::string& name,
   std::unique_ptr<WriteFile>& file);
 
-std::vector<char> read_entire_file(RandomReadFile* file, uint64_t& pos);
+std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos);
 
 void exit_on_error(StoreResult result);
 

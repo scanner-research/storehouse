@@ -25,7 +25,7 @@ namespace storehouse {
 StoreResult RandomReadFile::read(
   uint64_t offset,
   size_t size,
-  std::vector<char> &data)
+  std::vector<uint8_t> &data)
 {
   size_t orig_data_size = data.size();
   data.resize(orig_data_size + size);
@@ -36,7 +36,7 @@ StoreResult RandomReadFile::read(
   return result;
 }
 
-StoreResult WriteFile::append(const std::vector<char> &data) {
+StoreResult WriteFile::append(const std::vector<uint8_t> &data) {
   return this->append(data.size(), data.data());
 }
 
@@ -132,9 +132,9 @@ StoreResult make_unique_write_file(
   return result;
 }
 
-std::vector<char> read_entire_file(RandomReadFile* file, uint64_t& pos) {
+std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos) {
   // Load the entire input
-  std::vector<char> bytes;
+  std::vector<uint8_t> bytes;
   {
     const size_t READ_SIZE = 1024 * 1024;
     while (true) {

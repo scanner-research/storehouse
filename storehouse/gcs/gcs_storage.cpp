@@ -73,7 +73,7 @@ public:
   StoreResult read(
     uint64_t offset,
     size_t size,
-    char* data,
+    uint8_t* data,
     size_t& size_read) override
   {
     std::unique_ptr<HttpRequest> request(
@@ -147,7 +147,7 @@ public:
   {
   }
 
-  StoreResult append(size_t size, const char* data) override {
+  StoreResult append(size_t size, const uint8_t* data) override {
     data_buffer_.insert(data_buffer_.end(), data, data + size);
 
     return StoreResult::Success;
