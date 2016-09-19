@@ -17,6 +17,7 @@
 
 #include <limits.h>     /* PATH_MAX */
 #include <sys/stat.h>   /* mkdir(2) */
+#include <unistd.h>     /* access(2) */
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -44,19 +45,31 @@ int mkdir_p(const char *path, mode_t mode) {
         if (*p == '/') {
             /* Temporarily truncate */
             *p = '\0';
-
-            if (mkdir(_path, mode) != 0) {
+            /* check if file exists before mkdir to avoid EACCES */
+            if (access(_path, F_OK) != 0) {
+              /* fail if error is anything but file does not exist */
+              if (errno != ENOENT) {
+                return -1;
+              }
+              if (mkdir(_path, mode) != 0) {
                 if (errno != EEXIST)
-                    return -1;
+                  return -1;
+              }
             }
 
             *p = '/';
         }
     }
 
-    if (mkdir(_path, mode) != 0) {
+    if (access(_path, F_OK) != 0) {
+      /* fail if error is anything but file does not exist */
+      if (errno != ENOENT) {
+        return -1;
+      }
+      if (mkdir(_path, mode) != 0) {
         if (errno != EEXIST)
-            return -1;
+          return -1;
+      }
     }
 
     return 0;
