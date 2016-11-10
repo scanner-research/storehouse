@@ -61,11 +61,13 @@ public:
     HttpTransport* transport,
     OAuth2Credential* credential,
     const std::string& object_name,
-    const std::string& media_url)
+    const std::string& media_url,
+    size_t size)
     : transport_(transport),
       credential_(credential),
       object_name_(object_name),
-      media_url_(media_url)
+      media_url_(media_url),
+      size_(size)
   {
 
   }
@@ -121,7 +123,8 @@ public:
   }
 
   StoreResult get_size(uint64_t& size) override {
-    return StoreResult::FileDoesNotExist;
+    size = size_;
+    return StoreResult::Success;
   }
 
 private:
@@ -129,6 +132,7 @@ private:
   OAuth2Credential* credential_;
   const std::string object_name_;
   const std::string media_url_;
+  size_t size_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -226,6 +230,7 @@ GCSStorage::GCSStorage(
   flow_.reset(new OAuth2ServiceAccountFlow(
                 config_->NewDefaultTransportOrDie()));
   flow_->InitFromJson(key_);
+
   flow_->set_default_scopes(
     google_storage_api::StorageService::SCOPES::DEVSTORAGE_FULL_CONTROL);
 
@@ -250,8 +255,33 @@ StoreResult GCSStorage::get_file_info(
   const std::string &name,
   FileInfo &file_info)
 {
-  assert(false);
-  return StoreResult::FileDoesNotExist;
+  std::unique_ptr<ObjectsResource_GetMethod> method(
+    service_->get_objects().NewGetMethod(&credential_,
+                                         googleapis::StringPiece(bucket_),
+                                         googleapis::StringPiece(name)));
+
+  google_storage_api::Object* response_obj =
+    google_storage_api::Object::New();
+  googleapis::util::Status status =
+    method->ExecuteAndParseResponse(response_obj);
+  if (!status.ok()) {
+    switch (status.error_code()) {
+    case googleapis::util::error::DEADLINE_EXCEEDED: {
+      // Timeout error
+      return StoreResult::TransientFailure;
+    } case googleapis::util::error::NOT_FOUND: {
+        return StoreResult::FileDoesNotExist;
+      } default: {
+        }
+    }
+    LOG(FATAL) << "GCSStorage: get_file_info "
+               << "(" << name.c_str() << ") error: "
+               << status.error_message().c_str();
+  }
+
+  file_info.size = response_obj->get_size();
+
+  return StoreResult::Success;
 }
 
 
@@ -286,7 +316,8 @@ StoreResult GCSStorage::make_random_read_file(
   std::string media_url = response_obj->get_media_link().ToString();
   assert(!media_url.empty());
 
-  file = new GCSRandomReadFile(transport_.get(), &credential_, name, media_url);
+  file = new GCSRandomReadFile(transport_.get(), &credential_, name, media_url,
+                               response_obj->get_size());
 
   return StoreResult::Success;
 }
