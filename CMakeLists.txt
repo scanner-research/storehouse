@@ -197,13 +197,15 @@ set(PUBLIC_HEADER_FILES
   storehouse/storage_backend.h
   storehouse/storage_config.h)
 
-install(TARGETS storehouse
+install(TARGETS storehouse storehousepy
   EXPORT StorehouseTarget
-  ARCHIVE DESTINATION lib)
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
+
+set(STOREHOUSEPY_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/storehousepy.so")
 
 install(FILES ${CUSTOM_LIBRARIES}
   DESTINATION lib)
-
 
 set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.a")
 set(STOREHOUSE_LIBRARIES ${CUSTOM_LIBRARIES})
