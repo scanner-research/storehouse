@@ -187,6 +187,11 @@ StoreResult PosixStorage::make_random_read_file(
   const std::string& name,
   RandomReadFile*& file)
 {
+  FileInfo file_info;
+  StoreResult result;
+  if ((result = get_file_info(name, file_info)) != StoreResult::Success) {
+    return result;
+  }
   file = new PosixRandomReadFile(data_directory_ + "/" + name);
   return StoreResult::Success;
 }

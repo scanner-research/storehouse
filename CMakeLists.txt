@@ -23,13 +23,13 @@ include(ExternalProject)
 ######################
 ###     Setup     ####
 ######################
-# Verify C++11 support
+# Verify C++14 support
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-if(COMPILER_SUPPORTS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+if(COMPILER_SUPPORTS_CXX14)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 else()
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support.")
 endif()
 
 ### Helper macros ####
@@ -65,10 +65,11 @@ endif()
 # find_package(LibLZMA REQUIRED)
 find_package(OpenSSL REQUIRED) # for GoogleAPIClient
 # find_package(BZip2 REQUIRED)
-find_package(Boost COMPONENTS thread program_options REQUIRED)
+find_package(Boost COMPONENTS thread program_options python REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(CURL REQUIRED)
+find_package(PythonLibs 2.7 EXACT REQUIRED)
 # find_package(Iconv REQUIRED)
 
 ExternalProject_Add(JsonCpp
@@ -178,6 +179,15 @@ add_library(storehouse
 
 target_link_libraries(storehouse
   "${STOREHOUSE_LIBRARIES}")
+
+add_library(storehousepy SHARED
+  storehouse/storehouse_python.cpp)
+set_target_properties(storehousepy PROPERTIES PREFIX "")
+target_include_directories(storehousepy PUBLIC ${PYTHON_INCLUDE_DIRS})
+target_link_libraries(storehousepy PUBLIC
+  storehouse
+  ${Boost_LIBRARIES}
+  ${PythonLibs_LIBRARIES})
 
 if(UNIX)
   set(PLATFORM_LINK_FLAGS "-pthread -ldl -lrt")

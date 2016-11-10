@@ -52,7 +52,7 @@ StorageBackend *StorageBackend::make_from_config(
   return nullptr;
 }
 
-std::string StoreResultToString(StoreResult result) {
+std::string store_result_to_string(StoreResult result) {
   switch (result) {
   case StoreResult::Success:
     return "Success";
@@ -161,7 +161,7 @@ void exit_on_error(StoreResult result) {
   if (result == StoreResult::Success) return;
 
   LOG(FATAL) << "Exiting due to failed operation result: "
-             << StoreResultToString(result) << ".";
+             << store_result_to_string(result) << ".";
   std::exit(EXIT_FAILURE);
 }
 
