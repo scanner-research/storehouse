@@ -29,8 +29,7 @@ class StorageConfig {
     const std::string& key,
     const std::string& bucket);
 
-  static StorageConfig* make_posix_config(
-    const std::string& data_directory);
+  static StorageConfig* make_posix_config();
 };
 
 }

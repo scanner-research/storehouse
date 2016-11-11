@@ -21,7 +21,6 @@
 namespace storehouse {
 
 struct PosixConfig : public StorageConfig {
-  std::string data_directory;
 };
 
 class PosixStorage : public StorageBackend {

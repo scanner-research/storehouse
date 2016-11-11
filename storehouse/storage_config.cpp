@@ -31,12 +31,9 @@ StorageConfig *StorageConfig::make_gcs_config(
   return config;
 }
 
-StorageConfig *StorageConfig::make_posix_config(
-  const std::string &data_directory)
+StorageConfig *StorageConfig::make_posix_config()
 {
-  PosixConfig *config = new PosixConfig;
-  config->data_directory = data_directory;
-  return config;
+  return new PosixConfig;
 }
 
 }

@@ -161,7 +161,6 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 /// PosixStorage
 PosixStorage::PosixStorage(PosixConfig config)
-  : data_directory_(config.data_directory)
 {
 }
 
@@ -172,9 +171,8 @@ StoreResult PosixStorage::get_file_info(
   const std::string &name,
   FileInfo &file_info)
 {
-  std::string filename = data_directory_ + "/" + name;
   struct stat stat_buf;
-  int rc = stat(filename.c_str(), &stat_buf);
+  int rc = stat(name.c_str(), &stat_buf);
   if (rc == 0) {
     file_info.size = stat_buf.st_size;
     return StoreResult::Success;
@@ -192,7 +190,7 @@ StoreResult PosixStorage::make_random_read_file(
   if ((result = get_file_info(name, file_info)) != StoreResult::Success) {
     return result;
   }
-  file = new PosixRandomReadFile(data_directory_ + "/" + name);
+  file = new PosixRandomReadFile(name);
   return StoreResult::Success;
 }
 
@@ -200,7 +198,7 @@ StoreResult PosixStorage::make_write_file(
   const std::string& name,
   WriteFile*& file)
 {
-  file = new PosixWriteFile(data_directory_ + "/" + name);
+  file = new PosixWriteFile(name);
   return StoreResult::Success;
 }
 
