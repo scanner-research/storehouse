@@ -27,9 +27,11 @@ WriteFile* make_write_file(StorageBackend* backend, const std::string& name) {
   return file;
 }
 
-std::string r_read(RandomReadFile* file, uint64_t offset, size_t size) {
+std::string r_read(RandomReadFile* file) {
   std::vector<uint8_t> data;
-  attempt(file->read(offset, size, data));
+  uint64_t size;
+  attempt(file->get_size(size));
+  attempt(file->read(0, size, data));
   return std::string(data.begin(), data.end());
 }
 
@@ -45,6 +47,13 @@ void w_append(WriteFile* file, std::string data) {
 
 void w_save(WriteFile* file) {
   attempt(file->save());
+}
+
+std::string read_all_file(StorageBackend* backend, const std::string& name) {
+  RandomReadFile* file = make_random_read_file(backend, name);
+  std::string contents = r_read(file);
+  delete file;
+  return contents;
 }
 
 BOOST_PYTHON_MODULE(storehousepy) {
@@ -65,7 +74,8 @@ BOOST_PYTHON_MODULE(storehousepy) {
     .def("make_random_read_file", &make_random_read_file,
          return_value_policy<manage_new_object>())
     .def("make_write_file", &make_write_file,
-         return_value_policy<manage_new_object>());
+         return_value_policy<manage_new_object>())
+    .def("read", &read_all_file);
   class_<RandomReadFile, boost::noncopyable>("RandomReadFile", no_init)
     .def("read", &r_read)
     .def("get_size", &r_get_size);
