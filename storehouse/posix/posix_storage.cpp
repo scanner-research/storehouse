@@ -33,15 +33,10 @@ public:
     const std::string& file_path)
     : file_path_(file_path)
   {
-    LOG(INFO) << "PosixRandomReadFile: opening " << file_path.c_str()
-              << " for reading.";
-
     fp_ = fopen(file_path.c_str(), "r");
-    if (fp_ == NULL) {
-      LOG(FATAL) << "PosixRandomReadFile: could not open " << file_path.c_str()
-                 << " for reading.";
-      exit(EXIT_FAILURE);
-    }
+    LOG_IF(FATAL, fp_ == NULL)
+      << "PosixRandomReadFile: could not open " << file_path.c_str()
+      << " for reading.";
     position_ = 0;
   }
 
@@ -59,11 +54,9 @@ public:
   {
     if (position_ != offset) {
       if (fseek(fp_, offset, SEEK_SET) != 0) {
-        if (ferror(fp_)) {
-          LOG(FATAL) << "PosixRandomReadFile: Error in seeking file "
-                     << file_path_.c_str() << " to position " << offset;
-          exit(EXIT_FAILURE);
-        }
+        LOG_IF(FATAL, ferror(fp_))
+          << "PosixRandomReadFile: Error in seeking file "
+          << file_path_.c_str() << " to position " << offset;
       }
       position_ = offset;
     }
@@ -71,12 +64,10 @@ public:
     size_read = fread(data, sizeof(uint8_t), size, fp_);
     position_ += size_read;
 
-    if (ferror(fp_)) {
-      LOG(FATAL) << "PosixRandomReadFile: Error in reading file "
-                 << file_path_.c_str() << " at position " << offset << ", "
-                 << "size " << size << ".";
-      exit(EXIT_FAILURE);
-    }
+    LOG_IF(FATAL, ferror(fp_))
+      << "PosixRandomReadFile: Error in reading file "
+      << file_path_.c_str() << " at position " << offset << ", "
+      << "size " << size << ".";
 
     if (feof(fp_)) {
       return StoreResult::EndOfFile;
@@ -114,21 +105,15 @@ public:
               << " for writing.";
     char* path;
     path = strdup(file_path.c_str());
-    if (path == NULL) {
-      LOG(FATAL) << "PosixWriteFile: could not strdup " << file_path.c_str();
-      exit(EXIT_FAILURE);
-    }
-    if (mkdir_p(dirname(path), S_IRWXU) != 0) {
-      LOG(FATAL) << "PosixWriteFile: could not mkdir " << path;
-      exit(EXIT_FAILURE);
-    }
+    LOG_IF(FATAL, path == NULL)
+      << "PosixWriteFile: could not strdup " << file_path.c_str();
+    LOG_IF(FATAL, mkdir_p(dirname(path), S_IRWXU) != 0)
+      << "PosixWriteFile: could not mkdir " << path;
     free(path);
     fp_ = fopen(file_path.c_str(), "w");
-    if (fp_ == NULL) {
-      LOG(FATAL) << "PosixWriteFile: could not open " << file_path.c_str()
-                 << " for writing.";
-      exit(EXIT_FAILURE);
-    }
+    LOG_IF(FATAL, fp_ == NULL)
+      << "PosixWriteFile: could not open " << file_path.c_str()
+      << " for writing.";
   }
 
   ~PosixWriteFile() {
@@ -140,11 +125,9 @@ public:
 
   StoreResult append(size_t size, const uint8_t* data) override {
     size_t size_written = fwrite(data, sizeof(uint8_t), size, fp_);
-    if (size_written != size) {
-      LOG(FATAL) << "PosixWriteFile: did not write all " << size << " "
-                 << "bytes for file " << file_path_.c_str() << ".";
-      exit(EXIT_FAILURE);
-    }
+    LOG_IF(FATAL, size_written != size)
+      << "PosixWriteFile: did not write all " << size << " "
+      << "bytes for file " << file_path_.c_str() << ".";
     return StoreResult::Success;
   }
 
@@ -173,7 +156,7 @@ StoreResult PosixStorage::get_file_info(
 {
   struct stat stat_buf;
   int rc = stat(name.c_str(), &stat_buf);
-  if (rc == 0) {
+  if (rc == 0 && !S_ISDIR(stat_buf.st_mode)) {
     file_info.size = stat_buf.st_size;
     return StoreResult::Success;
   } else {
