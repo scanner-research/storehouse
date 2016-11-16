@@ -129,8 +129,8 @@ void exit_on_error(StoreResult result);
   do {                                                                  \
     int sleep_debt__ = 1;                                               \
     while (true) {                                                      \
-      const storehouse::StoreResult result__ = (expression__);             \
-      if (result__ == storehouse::StoreResult::TransientFailure) {         \
+      const storehouse::StoreResult result__ = (expression__);          \
+      if (result__ == storehouse::StoreResult::TransientFailure) {      \
         double sleep_time__ =                                           \
           (sleep_debt__ + (static_cast<double>(rand()) / RAND_MAX));    \
         if (sleep_debt__ < 64) {                                        \
@@ -149,14 +149,19 @@ void exit_on_error(StoreResult result);
     }                                                                   \
   } while (0);
 
-void backoff_fail(std::function<StoreResult()> func);
+#define BACKOFF_FAIL(expression__)              \
+  do {                                          \
+    storehouse::StoreResult result___;          \
+    EXP_BACKOFF(expression__, result___);       \
+    storehouse::exit_on_error(result___);       \
+  } while (0);
 
-#define RETURN_ON_ERROR(expression)                     \
-  do {                                                  \
+#define RETURN_ON_ERROR(expression)                        \
+  do {                                                     \
     const storehouse::StoreResult result = (expression);   \
     if (result != storehouse::StoresResult::Success) {     \
-      return result;                                    \
-    }                                                   \
+      return result;                                       \
+    }                                                      \
   } while (0);
 
 }
