@@ -149,6 +149,7 @@ void exit_on_error(StoreResult result);
     }                                                                   \
   } while (0);
 
+void backoff_fail(std::function<StoreResult()> func);
 
 #define RETURN_ON_ERROR(expression)                     \
   do {                                                  \

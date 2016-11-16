@@ -165,4 +165,10 @@ void exit_on_error(StoreResult result) {
   std::exit(EXIT_FAILURE);
 }
 
+void backoff_fail(std::function<StoreResult()> func) {
+  StoreResult result;
+  EXP_BACKOFF(func(), result);
+  exit_on_error(result);
+}
+
 }
