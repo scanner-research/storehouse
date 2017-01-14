@@ -88,6 +88,10 @@ public:
     }
   }
 
+  const std::string path() override {
+    return file_path_;
+  }
+
 private:
   const std::string file_path_;
   FILE* fp_;
@@ -134,6 +138,10 @@ public:
   StoreResult save() override {
     fflush(fp_);
     return StoreResult::Success;
+  }
+
+  const std::string path() override {
+    return file_path_;
   }
 
 private:

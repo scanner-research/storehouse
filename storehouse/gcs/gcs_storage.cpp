@@ -127,6 +127,10 @@ public:
     return StoreResult::Success;
   }
 
+  const std::string path() override {
+    return object_name_;
+  }
+
 private:
   HttpTransport* transport_;
   OAuth2Credential* credential_;
@@ -195,6 +199,10 @@ public:
       assert(status.ok());
     }
     return StoreResult::Success;
+  }
+
+  const std::string path() override {
+    return object_name_;
   }
 
 private:

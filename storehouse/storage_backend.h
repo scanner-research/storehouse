@@ -62,6 +62,8 @@ public:
     size_t& size_read) = 0;
 
   virtual StoreResult get_size(uint64_t& size) = 0;
+
+  virtual const std::string path() = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +77,8 @@ public:
   virtual StoreResult append(size_t size, const uint8_t* data) = 0;
 
   virtual StoreResult save() = 0;
+
+  virtual const std::string path() = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
