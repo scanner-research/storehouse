@@ -34,6 +34,7 @@ enum class StoreResult {
   FileExists,
   FileDoesNotExist,
   TransientFailure,
+  ReadFailure
 };
 
 std::string store_result_to_string(StoreResult result);

@@ -34,9 +34,6 @@ public:
     : file_path_(file_path)
   {
     fp_ = fopen(file_path.c_str(), "r");
-    LOG_IF(FATAL, fp_ == NULL)
-      << "PosixRandomReadFile: could not open " << file_path.c_str()
-      << " for reading.";
     position_ = 0;
   }
 
@@ -52,6 +49,8 @@ public:
     uint8_t* data,
     size_t& size_read) override
   {
+    if (fp_ == NULL) { return StoreResult::ReadFailure; }
+
     if (position_ != offset) {
       if (fseek(fp_, offset, SEEK_SET) != 0) {
         LOG_IF(FATAL, ferror(fp_))
@@ -77,6 +76,8 @@ public:
   }
 
   StoreResult get_size(uint64_t& size) override {
+    if (fp_ == NULL) { return StoreResult::ReadFailure; }
+
     int fd = fileno(fp_);
     struct stat stat_buf;
     int rc = fstat(fd, &stat_buf);
