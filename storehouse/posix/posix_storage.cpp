@@ -106,7 +106,7 @@ public:
   PosixWriteFile(const std::string& file_path)
     : file_path_(file_path)
   {
-    LOG(INFO) << "PosixWriteFile: opening " << file_path.c_str()
+    VLOG(1) << "PosixWriteFile: opening " << file_path.c_str()
               << " for writing.";
     char* path;
     path = strdup(file_path.c_str());
