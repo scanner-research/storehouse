@@ -73,7 +73,7 @@ StoreResult make_unique_random_read_file(
   const std::string &name,
   std::unique_ptr<RandomReadFile> &file)
 {
-  RandomReadFile *ptr;
+  RandomReadFile *ptr = nullptr;
 
   int sleep_debt = 1;
   StoreResult result;
@@ -105,7 +105,7 @@ StoreResult make_unique_write_file(
   const std::string &name,
   std::unique_ptr<WriteFile> &file)
 {
-  WriteFile *ptr;
+  WriteFile *ptr = nullptr;
 
   int sleep_debt = 1;
   StoreResult result;
