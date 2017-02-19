@@ -70,6 +70,9 @@ find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(CURL REQUIRED)
 find_package(PythonLibs 2.7 EXACT REQUIRED)
+find_package(aws-sdk-cpp REQUIRED)
+set(AWS_MODULES core s3)
+
 # find_package(Iconv REQUIRED)
 
 ExternalProject_Add(JsonCpp
@@ -175,10 +178,15 @@ add_library(storehouse
   storehouse/storage_config.cpp
   storehouse/util.cpp
   $<TARGET_OBJECTS:gcs_storage_lib>
-  $<TARGET_OBJECTS:posix_storage_lib>)
+  $<TARGET_OBJECTS:posix_storage_lib>
+  $<TARGET_OBJECTS:s3_storage_lib>)
 
-target_link_libraries(storehouse
+target_link_libraries(storehouse PUBLIC
   "${STOREHOUSE_LIBRARIES}")
+
+foreach(MODULE ${AWS_MODULES})
+  target_link_libraries(storehouse PUBLIC aws-cpp-sdk-${MODULE})
+endforeach()
 
 add_library(storehousepy SHARED
   storehouse/storehouse_python.cpp)

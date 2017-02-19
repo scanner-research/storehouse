@@ -30,6 +30,8 @@ class StorageConfig {
     const std::string& bucket);
 
   static StorageConfig* make_posix_config();
+
+  static StorageConfig* make_s3_config(const std::string& bucket);
 };
 
 }

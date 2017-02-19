@@ -16,6 +16,7 @@
 #include "storehouse/storage_config.h"
 #include "storehouse/gcs/gcs_storage.h"
 #include "storehouse/posix/posix_storage.h"
+#include "storehouse/s3/s3_storage.h"
 
 namespace storehouse {
 
@@ -34,6 +35,13 @@ StorageConfig *StorageConfig::make_gcs_config(
 StorageConfig *StorageConfig::make_posix_config()
 {
   return new PosixConfig;
+}
+
+StorageConfig *StorageConfig::make_s3_config(const std::string& bucket)
+{
+  S3Config* config = new S3Config;
+  config->bucket = bucket;
+  return config;
 }
 
 }

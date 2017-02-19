@@ -14,3 +14,4 @@
 
 add_subdirectory(gcs)
 add_subdirectory(posix)
+add_subdirectory(s3)

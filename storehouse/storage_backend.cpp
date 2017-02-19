@@ -16,6 +16,7 @@
 #include "storehouse/storage_backend.h"
 #include "storehouse/gcs/gcs_storage.h"
 #include "storehouse/posix/posix_storage.h"
+#include "storehouse/s3/s3_storage.h"
 #include "storehouse/util.h"
 
 #include <cstdlib>
@@ -48,6 +49,8 @@ StorageBackend *StorageBackend::make_from_config(
   } else if (const PosixConfig *d_config =
              dynamic_cast<const PosixConfig *>(config)) {
     return new PosixStorage(*d_config);
+  } else if (const S3Config *s3_config = dynamic_cast<const S3Config*>(config)) {
+    return new S3Storage(*s3_config);
   }
   return nullptr;
 }
