@@ -24,10 +24,10 @@ class StorageConfig {
  public:
   virtual ~StorageConfig() {};
 
-  static StorageConfig* make_gcs_config(
-    const std::string& certificates_path,
-    const std::string& key,
-    const std::string& bucket);
+  // static StorageConfig* make_gcs_config(
+  //   const std::string& certificates_path,
+  //   const std::string& key,
+  //   const std::string& bucket);
 
   static StorageConfig* make_posix_config();
 

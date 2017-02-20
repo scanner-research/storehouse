@@ -14,23 +14,23 @@
  */
 
 #include "storehouse/storage_config.h"
-#include "storehouse/gcs/gcs_storage.h"
+// #include "storehouse/gcs/gcs_storage.h"
 #include "storehouse/posix/posix_storage.h"
 #include "storehouse/s3/s3_storage.h"
 
 namespace storehouse {
 
-StorageConfig *StorageConfig::make_gcs_config(
-  const std::string &certificates_path,
-  const std::string &key,
-  const std::string &bucket)
-{
-  GCSConfig *config = new GCSConfig;
-  config->certificates_path = certificates_path;
-  config->key = key;
-  config->bucket = bucket;
-  return config;
-}
+// StorageConfig *StorageConfig::make_gcs_config(
+//   const std::string &certificates_path,
+//   const std::string &key,
+//   const std::string &bucket)
+// {
+//   GCSConfig *config = new GCSConfig;
+//   config->certificates_path = certificates_path;
+//   config->key = key;
+//   config->bucket = bucket;
+//   return config;
+// }
 
 StorageConfig *StorageConfig::make_posix_config()
 {

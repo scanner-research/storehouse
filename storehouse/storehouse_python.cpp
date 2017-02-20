@@ -70,9 +70,9 @@ BOOST_PYTHON_MODULE(storehousepy) {
     .def("make_posix_config", &StorageConfig::make_posix_config,
          return_value_policy<manage_new_object>())
     .staticmethod("make_posix_config")
-    .def("make_gcs_config", &StorageConfig::make_gcs_config,
-         return_value_policy<manage_new_object>())
-    .staticmethod("make_gcs_config")
+    // .def("make_gcs_config", &StorageConfig::make_gcs_config,
+    //      return_value_policy<manage_new_object>())
+    // .staticmethod("make_gcs_config")
     .def("make_s3_config", &StorageConfig::make_s3_config,
          return_value_policy<manage_new_object>())
     .staticmethod("make_s3_config");

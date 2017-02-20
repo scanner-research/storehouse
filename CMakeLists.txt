@@ -70,74 +70,28 @@ find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(CURL REQUIRED)
 find_package(PythonLibs 2.7 EXACT REQUIRED)
-find_package(aws-sdk-cpp REQUIRED)
 set(AWS_MODULES core s3)
 
-# find_package(Iconv REQUIRED)
-
-ExternalProject_Add(JsonCpp
-  GIT_REPOSITORY "https://github.com/open-source-parsers/jsoncpp.git"
-  GIT_TAG "1.7.2"
+ExternalProject_Add(AWS
+  GIT_REPOSITORY "https://github.com/aws/aws-sdk-cpp"
+  GIT_TAG "1.0.71"
 
   UPDATE_COMMAND ""
 
-  SOURCE_DIR "${THIRDPARTY_SOURCE_DIR}/jsoncpp"
+  SOURCE_DIR "${THIRDPARTY_SOURCE_DIR}/aws-sdk-cpp"
+  INSTALL_DIR ${GLOBAL_OUTPUT_PATH}/aws-sdk-cpp
   CMAKE_ARGS
-      -DCMAKE_INSTALL_PREFIX=${GLOBAL_OUTPUT_PATH}/jsoncpp
-      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-      -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-)
+  -D CMAKE_INSTALL_PREFIX=${GLOBAL_OUTPUT_PATH}/aws-sdk-cpp
+  -D BUILD_ONLY=${AWS_MODULES}
+  -D BUILD_SHARED_LIBS=ON
+  -D ENABLE_TESTING=OFF
+  )
 
-# Google API cpp client
-ExternalProject_Add(GoogleAPICppClient
-  DEPENDS JsonCpp
-  GIT_REPOSITORY "https://github.com/abpoms/google-api-cpp-client.git"
-  GIT_TAG "002b66c3ca8f49385ea13c7967329542f36c1c2e"
-
-  UPDATE_COMMAND ""
-
-  SOURCE_DIR "${THIRDPARTY_SOURCE_DIR}/google-api-cpp-client"
-  INSTALL_DIR ${GLOBAL_OUTPUT_PATH}/google-api-cpp-client
-  CMAKE_ARGS
-      -DCMAKE_INSTALL_PREFIX=${GLOBAL_OUTPUT_PATH}/google-api-cpp-client
-      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-      -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-      -DBZIP2_INCLUDE_DIR=${BZIP2_INCLUDE_DIR}
-      -DCMAKE_LIBRARY_PATH=${CMAKE_LIBRARY_PATH}
-      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-      -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
-
-  CMAKE_CACHE_ARGS
-      -DJSONCPP_INCLUDE_DIRS:FILEPATH=${THIRDPARTY_SOURCE_DIR}/jsoncpp/include
-      -DJSONCPP_LIBRARY:FILEPATH=${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a
-      -DGLOG_ROOT_DIR:FILEPATH=${GLOG_ROOT_DIR}
-      -DGFLAGS_ROOT_DIR:FILEPATH=${GFLAGS_ROOT_DIR}
-      -DOPENSSL_ROOT_DIR:FILEPATH=${OPENSSL_ROOT_DIR}
-      -DBOOST_ROOT:FILEPATH=${BOOST_ROOT}
-      -DCURL_INCLUDE_DIR:FILEPATH=${CURL_INCLUDE_DIR}
-      -DCURL_LIBRARY:FILEPATH=${CURL_LIBRARY}
-      -DCURL_LIBRARIES:FILEPATH=${CURL_LIBRARIES}
-)
-
-# googletest
-ExternalProject_Add(GoogleTest
-  GIT_REPOSITORY "https://github.com/google/googletest"
-  GIT_TAG 0a439623f75c029912728d80cb7f1b8b48739ca4
-
-  UPDATE_COMMAND ""
-
-  SOURCE_DIR "${THIRDPARTY_SOURCE_DIR}/googletest"
-
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${GLOBAL_OUTPUT_PATH}/googletest
-      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-
-  INSTALL_DIR "${GLOBAL_OUTPUT_PATH}/googletest"
-)
+foreach(MODULE ${AWS_MODULES})
+  set(CMAKE_PREFIX_PATH "$ENV{aws_DIR}/lib/cmake/aws-cpp-sdk-${MODULE}:${CMAKE_PREFIX_PATH}")
+  message(STATUS "${CMAKE_PREFIX_PATH}")
+  find_package(aws-cpp-sdk-${MODULE} REQUIRED)
+endforeach()
 
 set(GTEST_INCLUDE_DIRS
   "${GLOBAL_OUTPUT_PATH}/googletest/include")
@@ -145,17 +99,6 @@ set(GTEST_LIBRARIES
   "${GLOBAL_OUTPUT_PATH}/googletest/lib/libgtest.a")
 set(GTEST_LIB_MAIN
   "${GLOBAL_OUTPUT_PATH}/googletest/lib/libgtest_main.a")
-
-set(CUSTOM_LIBRARIES
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogle_storage_api.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_oauth2.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_jsoncpp.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_json.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_http.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_curl_http.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_utils.a"
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/lib/libgoogleapis_internal.a"
-  "${GLOBAL_OUTPUT_PATH}/jsoncpp/lib/libjsoncpp.a")
 
 set(STOREHOUSE_LIBRARIES
   "${CUSTOM_LIBRARIES}"
@@ -166,8 +109,6 @@ set(STOREHOUSE_LIBRARIES
 
 include_directories(
   "."
-  "${GLOBAL_OUTPUT_PATH}/google-api-cpp-client/include"
-  "${GLOBAL_OUTPUT_PATH}/jsoncpp/include/"
   "${GLOG_INCLUDE_DIRS}"
   "${GTEST_INCLUDE_DIRS}")
 
@@ -177,7 +118,6 @@ add_library(storehouse
   storehouse/storage_backend.cpp
   storehouse/storage_config.cpp
   storehouse/util.cpp
-  $<TARGET_OBJECTS:gcs_storage_lib>
   $<TARGET_OBJECTS:posix_storage_lib>
   $<TARGET_OBJECTS:s3_storage_lib>)
 

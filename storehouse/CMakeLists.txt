@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(gcs)
+# add_subdirectory(gcs)
 add_subdirectory(posix)
 add_subdirectory(s3)
