@@ -72,25 +72,9 @@ find_package(CURL REQUIRED)
 find_package(PythonLibs 2.7 EXACT REQUIRED)
 set(AWS_MODULES core s3)
 
-ExternalProject_Add(AWS
-  GIT_REPOSITORY "https://github.com/aws/aws-sdk-cpp"
-  GIT_TAG "1.0.71"
-
-  UPDATE_COMMAND ""
-
-  SOURCE_DIR "${THIRDPARTY_SOURCE_DIR}/aws-sdk-cpp"
-  INSTALL_DIR ${GLOBAL_OUTPUT_PATH}/aws-sdk-cpp
-  CMAKE_ARGS
-  -D CMAKE_INSTALL_PREFIX=${GLOBAL_OUTPUT_PATH}/aws-sdk-cpp
-  -D BUILD_ONLY=${AWS_MODULES}
-  -D BUILD_SHARED_LIBS=ON
-  -D ENABLE_TESTING=OFF
-  )
-
 foreach(MODULE ${AWS_MODULES})
-  set(CMAKE_PREFIX_PATH "$ENV{aws_DIR}/lib/cmake/aws-cpp-sdk-${MODULE}:${CMAKE_PREFIX_PATH}")
-  message(STATUS "${CMAKE_PREFIX_PATH}")
-  find_package(aws-cpp-sdk-${MODULE} REQUIRED)
+  find_package(aws-cpp-sdk-${MODULE} REQUIRED CONFIG
+    PATHS "thirdparty/build/bin/aws-sdk-cpp/lib/cmake/aws-cpp-sdk-${MODULE}")
 endforeach()
 
 set(GTEST_INCLUDE_DIRS
