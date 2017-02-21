@@ -62,20 +62,11 @@ if(NOT APPLE AND UNIX)
 endif()
 
 ###### PROJECT LIBRARIES #######
-# find_package(LibLZMA REQUIRED)
-find_package(OpenSSL REQUIRED) # for GoogleAPIClient
-# find_package(BZip2 REQUIRED)
 find_package(Boost COMPONENTS thread program_options python REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(CURL REQUIRED)
 find_package(PythonLibs 2.7 EXACT REQUIRED)
-set(AWS_MODULES core s3)
-
-foreach(MODULE ${AWS_MODULES})
-  find_package(aws-cpp-sdk-${MODULE} REQUIRED CONFIG
-    PATHS "thirdparty/build/bin/aws-sdk-cpp/lib/cmake/aws-cpp-sdk-${MODULE}")
-endforeach()
 
 set(GTEST_INCLUDE_DIRS
   "${GLOBAL_OUTPUT_PATH}/googletest/include")
@@ -96,9 +87,16 @@ include_directories(
   "${GLOG_INCLUDE_DIRS}"
   "${GTEST_INCLUDE_DIRS}")
 
+set(AWS_MODULES core s3)
+foreach(MODULE ${AWS_MODULES})
+  find_package(aws-cpp-sdk-${MODULE} REQUIRED CONFIG
+    PATHS "thirdparty/build/bin/aws-sdk-cpp/lib/cmake/aws-cpp-sdk-${MODULE}")
+  list(APPEND STOREHOUSE_LIBRARIES aws-cpp-sdk-${MODULE})
+endforeach()
+
 add_subdirectory(storehouse)
 
-add_library(storehouse
+add_library(storehouse SHARED
   storehouse/storage_backend.cpp
   storehouse/storage_config.cpp
   storehouse/util.cpp
@@ -108,9 +106,12 @@ add_library(storehouse
 target_link_libraries(storehouse PUBLIC
   "${STOREHOUSE_LIBRARIES}")
 
-foreach(MODULE ${AWS_MODULES})
-  target_link_libraries(storehouse PUBLIC aws-cpp-sdk-${MODULE})
-endforeach()
+# Preserves the rpath between in-tree and installed shared libraries, so
+# storehousepy.so knows where to find libstorehouse.py
+# https://cmake.org/Wiki/CMake_RPATH_handling#Always_full_RPATH
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_library(storehousepy SHARED
   storehouse/storehouse_python.cpp)
@@ -139,7 +140,7 @@ set(STOREHOUSEPY_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/storehousepy.so")
 install(FILES ${CUSTOM_LIBRARIES}
   DESTINATION lib)
 
-set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.a")
+set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.so")
 set(STOREHOUSE_LIBRARIES ${CUSTOM_LIBRARIES})
 
 configure_file(cmake/StorehouseConfig.cmake.in
