@@ -64,7 +64,7 @@ if(NOT APPLE AND UNIX)
 endif()
 
 ###### PROJECT LIBRARIES #######
-find_package(Boost COMPONENTS thread program_options python REQUIRED)
+find_package(Boost REQUIRED COMPONENTS thread program_options python)
 find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(CURL REQUIRED)
@@ -93,20 +93,16 @@ include_directories(
   "${PYTHON_INCLUDE_DIRS}")
 
 set(AWS_MODULES core s3)
+set(AWS_TARGETS)
 foreach(MODULE ${AWS_MODULES})
   find_package(aws-cpp-sdk-${MODULE} REQUIRED CONFIG
     PATHS "thirdparty/build/bin/aws-sdk-cpp/lib/cmake/aws-cpp-sdk-${MODULE}")
-  list(APPEND STOREHOUSE_LIBRARIES aws-cpp-sdk-${MODULE})
+  list(APPEND AWS_TARGETS aws-cpp-sdk-${MODULE})
 endforeach()
 
 add_subdirectory(storehouse)
 
-if(BUILD_STATIC)
-  set(BUILD_MODE STATIC)
-else()
-  set(BUILD_MODE SHARED)
-endif()
-add_library(storehouse ${BUILD_MODE}
+set(SOURCE_FILES
   storehouse/storage_backend.cpp
   storehouse/storage_config.cpp
   storehouse/storehouse_python.cpp
@@ -114,31 +110,37 @@ add_library(storehouse ${BUILD_MODE}
   $<TARGET_OBJECTS:posix_storage_lib>
   $<TARGET_OBJECTS:s3_storage_lib>)
 
-target_link_libraries(storehouse PUBLIC
-  "${STOREHOUSE_LIBRARIES}")
-
-if(UNIX)
-  set(PLATFORM_LINK_FLAGS "-pthread -ldl -lrt")
+if(BUILD_STATIC)
+  set(DEPS storehouse_deps.o)
+  add_custom_command(
+    OUTPUT ${DEPS}
+    COMMAND ar -x $<TARGET_FILE:aws-cpp-sdk-core>
+    COMMAND ar -x $<TARGET_FILE:aws-cpp-sdk-s3>
+    COMMAND ld -r *.o -o ${DEPS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  add_library(storehouse STATIC ${DEPS} ${SOURCE_FILES})
+else()
+  add_library(storehouse SHARED ${SOURCE_FILES})
 endif()
+
+target_link_libraries(storehouse ${STOREHOUSE_LIBRARIES} ${AWS_TARGETS})
 
 set(PUBLIC_HEADER_FILES
   storehouse/storage_backend.h
   storehouse/storage_config.h)
+
+if(BUILD_STATIC)
+  set(STOREHOUSE_LIBRARY "libstorehouse.a")
+else()
+  set(STOREHOUSE_LIBRARY "libstorehouse.so")
+endif()
 
 install(TARGETS storehouse
   EXPORT StorehouseTarget
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-install(FILES ${CUSTOM_LIBRARIES}
-  DESTINATION lib)
-
-if(BUILD_STATIC)
-  set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.a")
-else()
-  set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.so")
-endif()
-set(STOREHOUSE_LIBRARIES ${CUSTOM_LIBRARIES})
+set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/${STOREHOUSE_LIBRARY}")
 
 configure_file(cmake/StorehouseConfig.cmake.in
   "${PROJECT_BINARY_DIR}/cmake/StorehouseConfig.cmake" @ONLY)
