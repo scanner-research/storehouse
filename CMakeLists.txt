@@ -16,6 +16,8 @@ cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 
 project(Storehouse)
 
+option(BUILD_STATIC "" OFF)
+
 enable_testing()
 
 include(ExternalProject)
@@ -80,12 +82,15 @@ set(STOREHOUSE_LIBRARIES
   "${GLOG_LIBRARIES}"
   "${CURL_LIBRARIES}"
   "${OPENSSL_LIBRARIES}"
-  "${STOREHOUSE_LIBRARIES}")
+  "${STOREHOUSE_LIBRARIES}"
+  "${Boost_LIBRARIES}"
+  "${PythonLibs_LIBRARIES}")
 
 include_directories(
   "."
   "${GLOG_INCLUDE_DIRS}"
-  "${GTEST_INCLUDE_DIRS}")
+  "${GTEST_INCLUDE_DIRS}"
+  "${PYTHON_INCLUDE_DIRS}")
 
 set(AWS_MODULES core s3)
 foreach(MODULE ${AWS_MODULES})
@@ -96,31 +101,21 @@ endforeach()
 
 add_subdirectory(storehouse)
 
-add_library(storehouse SHARED
+if(BUILD_STATIC)
+  set(BUILD_MODE STATIC)
+else()
+  set(BUILD_MODE SHARED)
+endif()
+add_library(storehouse ${BUILD_MODE}
   storehouse/storage_backend.cpp
   storehouse/storage_config.cpp
+  storehouse/storehouse_python.cpp
   storehouse/util.cpp
   $<TARGET_OBJECTS:posix_storage_lib>
   $<TARGET_OBJECTS:s3_storage_lib>)
 
 target_link_libraries(storehouse PUBLIC
   "${STOREHOUSE_LIBRARIES}")
-
-# Preserves the rpath between in-tree and installed shared libraries, so
-# storehousepy.so knows where to find libstorehouse.py
-# https://cmake.org/Wiki/CMake_RPATH_handling#Always_full_RPATH
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-add_library(storehousepy SHARED
-  storehouse/storehouse_python.cpp)
-set_target_properties(storehousepy PROPERTIES PREFIX "")
-target_include_directories(storehousepy PUBLIC ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(storehousepy PUBLIC
-  storehouse
-  ${Boost_LIBRARIES}
-  ${PythonLibs_LIBRARIES})
 
 if(UNIX)
   set(PLATFORM_LINK_FLAGS "-pthread -ldl -lrt")
@@ -130,17 +125,19 @@ set(PUBLIC_HEADER_FILES
   storehouse/storage_backend.h
   storehouse/storage_config.h)
 
-install(TARGETS storehouse storehousepy
+install(TARGETS storehouse
   EXPORT StorehouseTarget
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
-set(STOREHOUSEPY_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/storehousepy.so")
-
 install(FILES ${CUSTOM_LIBRARIES}
   DESTINATION lib)
 
-set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.so")
+if(BUILD_STATIC)
+  set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.a")
+else()
+  set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/libstorehouse.so")
+endif()
 set(STOREHOUSE_LIBRARIES ${CUSTOM_LIBRARIES})
 
 configure_file(cmake/StorehouseConfig.cmake.in

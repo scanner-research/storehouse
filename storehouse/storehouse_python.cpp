@@ -62,7 +62,7 @@ void write_all_file(StorageBackend* backend, const std::string& name, const std:
   w_save(file);
 }
 
-BOOST_PYTHON_MODULE(storehousepy) {
+BOOST_PYTHON_MODULE(libstorehouse) {
   using namespace bp;
   register_exception_translator<StoreResult>(translate_exception);
   StoreResult (RandomReadFile::*rrf_read)(uint64_t, size_t, std::vector<uint8_t>&) = &RandomReadFile::read;
