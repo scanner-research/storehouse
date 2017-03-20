@@ -62,6 +62,10 @@ void write_all_file(StorageBackend* backend, const std::string& name, const std:
   w_save(file);
 }
 
+void delete_file(StorageBackend* backend, const std::string& name) {
+  attempt(backend->delete_file(name));
+}
+
 BOOST_PYTHON_MODULE(libstorehouse) {
   using namespace bp;
   register_exception_translator<StoreResult>(translate_exception);
@@ -85,7 +89,8 @@ BOOST_PYTHON_MODULE(libstorehouse) {
     .def("make_write_file", &make_write_file,
          return_value_policy<manage_new_object>())
     .def("read", &read_all_file)
-    .def("write", &write_all_file);
+    .def("write", &write_all_file)
+    .def("delete", &delete_file);
   class_<RandomReadFile, boost::noncopyable>("RandomReadFile", no_init)
     .def("read", &r_read)
     .def("get_size", &r_get_size);
