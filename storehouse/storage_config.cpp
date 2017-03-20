@@ -32,16 +32,11 @@ namespace storehouse {
 //   return config;
 // }
 
-StorageConfig *StorageConfig::make_posix_config()
-{
-  return new PosixConfig;
-}
+StorageConfig* StorageConfig::make_posix_config() { return new PosixConfig; }
 
-StorageConfig *StorageConfig::make_s3_config(const std::string& bucket)
-{
+StorageConfig* StorageConfig::make_s3_config(const std::string& bucket) {
   S3Config* config = new S3Config;
   config->bucket = bucket;
   return config;
 }
-
 }

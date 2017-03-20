@@ -13,29 +13,24 @@ struct S3Config : public StorageConfig {
 };
 
 class S3Storage : public StorageBackend {
-public:
+ public:
   S3Storage(S3Config config);
   ~S3Storage();
 
-  StoreResult get_file_info(
-    const std::string &name,
-    FileInfo &file_info) override;
+  StoreResult get_file_info(const std::string& name,
+                            FileInfo& file_info) override;
 
-  StoreResult make_random_read_file(
-    const std::string& name,
-    RandomReadFile*& file) override;
+  StoreResult make_random_read_file(const std::string& name,
+                                    RandomReadFile*& file) override;
 
-  StoreResult make_write_file(
-    const std::string& name,
-    WriteFile*& file) override;
+  StoreResult make_write_file(const std::string& name,
+                              WriteFile*& file) override;
 
-  StoreResult delete_file(
-    const std::string& name) override;
+  StoreResult delete_file(const std::string& name) override;
 
-private:
+ private:
   Aws::SDKOptions sdk_options_;
   Aws::S3::S3Client* client_;
   std::string bucket_;
 };
-
 }

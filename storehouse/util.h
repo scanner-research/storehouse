@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include <string>
-#include <string.h>
-#include <sys/stat.h>   /* mkdir(2), mode_t */
 #include <libgen.h>
+#include <string.h>
+#include <sys/stat.h> /* mkdir(2), mode_t */
+#include <string>
 
 namespace storehouse {
 
@@ -36,8 +36,7 @@ inline std::string basename_s(const std::string& path) {
   return std::string(base);
 }
 
-int mkdir_p(const char *path, mode_t mode);
+int mkdir_p(const char* path, mode_t mode);
 
 void temp_file(FILE** file, std::string& name);
-
 }

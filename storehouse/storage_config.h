@@ -15,14 +15,14 @@
 
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace storehouse {
 
 class StorageConfig {
  public:
-  virtual ~StorageConfig() {};
+  virtual ~StorageConfig(){};
 
   // static StorageConfig* make_gcs_config(
   //   const std::string& certificates_path,
@@ -33,5 +33,4 @@ class StorageConfig {
 
   static StorageConfig* make_s3_config(const std::string& bucket);
 };
-
 }

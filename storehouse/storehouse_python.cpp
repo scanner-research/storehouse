@@ -1,6 +1,6 @@
 #include <boost/python.hpp>
-#include "storehouse/storage_config.h"
 #include "storehouse/storage_backend.h"
+#include "storehouse/storage_config.h"
 
 using namespace storehouse;
 namespace bp = boost::python;
@@ -15,7 +15,8 @@ void attempt(StoreResult result) {
   }
 }
 
-RandomReadFile* make_random_read_file(StorageBackend* backend, const std::string& name) {
+RandomReadFile* make_random_read_file(StorageBackend* backend,
+                                      const std::string& name) {
   RandomReadFile* file;
   attempt(backend->make_random_read_file(name, file));
   return file;
@@ -42,12 +43,10 @@ uint64_t r_get_size(RandomReadFile* file) {
 }
 
 void w_append(WriteFile* file, const std::string& data) {
-  attempt(file->append(data.size(), (const uint8_t*) data.c_str()));
+  attempt(file->append(data.size(), (const uint8_t*)data.c_str()));
 }
 
-void w_save(WriteFile* file) {
-  attempt(file->save());
-}
+void w_save(WriteFile* file) { attempt(file->save()); }
 
 std::string read_all_file(StorageBackend* backend, const std::string& name) {
   RandomReadFile* file = make_random_read_file(backend, name);
@@ -56,7 +55,8 @@ std::string read_all_file(StorageBackend* backend, const std::string& name) {
   return contents;
 }
 
-void write_all_file(StorageBackend* backend, const std::string& name, const std::string& data) {
+void write_all_file(StorageBackend* backend, const std::string& name,
+                    const std::string& data) {
   WriteFile* file = make_write_file(backend, name);
   w_append(file, data);
   w_save(file);
@@ -69,7 +69,8 @@ void delete_file(StorageBackend* backend, const std::string& name) {
 BOOST_PYTHON_MODULE(libstorehouse) {
   using namespace bp;
   register_exception_translator<StoreResult>(translate_exception);
-  StoreResult (RandomReadFile::*rrf_read)(uint64_t, size_t, std::vector<uint8_t>&) = &RandomReadFile::read;
+  StoreResult (RandomReadFile::*rrf_read)(
+    uint64_t, size_t, std::vector<uint8_t>&) = &RandomReadFile::read;
   class_<StorageConfig>("StorageConfig", no_init)
     .def("make_posix_config", &StorageConfig::make_posix_config,
          return_value_policy<manage_new_object>())

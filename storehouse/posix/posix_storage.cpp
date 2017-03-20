@@ -18,21 +18,18 @@
 
 #include <glog/logging.h>
 
-#include <string.h>
 #include <libgen.h>
-#include <cstdlib>
+#include <string.h>
 #include <sys/stat.h>
+#include <cstdlib>
 
 namespace storehouse {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// PosixRandomReadFile
 class PosixRandomReadFile : public RandomReadFile {
-public:
-  PosixRandomReadFile(
-    const std::string& file_path)
-    : file_path_(file_path)
-  {
+ public:
+  PosixRandomReadFile(const std::string& file_path) : file_path_(file_path) {
     fp_ = fopen(file_path.c_str(), "r");
     position_ = 0;
   }
@@ -43,19 +40,17 @@ public:
     }
   }
 
-  StoreResult read(
-    uint64_t offset,
-    size_t size,
-    uint8_t* data,
-    size_t& size_read) override
-  {
-    if (fp_ == NULL) { return StoreResult::ReadFailure; }
+  StoreResult read(uint64_t offset, size_t size, uint8_t* data,
+                   size_t& size_read) override {
+    if (fp_ == NULL) {
+      return StoreResult::ReadFailure;
+    }
 
     if (position_ != offset) {
       if (fseek(fp_, offset, SEEK_SET) != 0) {
         LOG_IF(FATAL, ferror(fp_))
-          << "PosixRandomReadFile: Error in seeking file "
-          << file_path_.c_str() << " to position " << offset;
+          << "PosixRandomReadFile: Error in seeking file " << file_path_.c_str()
+          << " to position " << offset;
       }
       position_ = offset;
     }
@@ -64,8 +59,8 @@ public:
     position_ += size_read;
 
     LOG_IF(FATAL, ferror(fp_))
-      << "PosixRandomReadFile: Error in reading file "
-      << file_path_.c_str() << " at position " << offset << ", "
+      << "PosixRandomReadFile: Error in reading file " << file_path_.c_str()
+      << " at position " << offset << ", "
       << "size " << size << ".";
 
     if (feof(fp_)) {
@@ -76,7 +71,9 @@ public:
   }
 
   StoreResult get_size(uint64_t& size) override {
-    if (fp_ == NULL) { return StoreResult::ReadFailure; }
+    if (fp_ == NULL) {
+      return StoreResult::ReadFailure;
+    }
 
     int fd = fileno(fp_);
     struct stat stat_buf;
@@ -89,11 +86,9 @@ public:
     }
   }
 
-  const std::string path() override {
-    return file_path_;
-  }
+  const std::string path() override { return file_path_; }
 
-private:
+ private:
   const std::string file_path_;
   FILE* fp_;
   int position_;
@@ -102,12 +97,10 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 /// PosixWriteFile
 class PosixWriteFile : public WriteFile {
-public:
-  PosixWriteFile(const std::string& file_path)
-    : file_path_(file_path)
-  {
+ public:
+  PosixWriteFile(const std::string& file_path) : file_path_(file_path) {
     VLOG(1) << "PosixWriteFile: opening " << file_path.c_str()
-              << " for writing.";
+            << " for writing.";
     char* path;
     path = strdup(file_path.c_str());
     LOG_IF(FATAL, path == NULL)
@@ -116,9 +109,8 @@ public:
       << "PosixWriteFile: could not mkdir " << path;
     free(path);
     fp_ = fopen(file_path.c_str(), "w");
-    LOG_IF(FATAL, fp_ == NULL)
-      << "PosixWriteFile: could not open " << file_path.c_str()
-      << " for writing.";
+    LOG_IF(FATAL, fp_ == NULL) << "PosixWriteFile: could not open "
+                               << file_path.c_str() << " for writing.";
   }
 
   ~PosixWriteFile() {
@@ -141,28 +133,21 @@ public:
     return StoreResult::Success;
   }
 
-  const std::string path() override {
-    return file_path_;
-  }
+  const std::string path() override { return file_path_; }
 
-private:
+ private:
   const std::string file_path_;
   FILE* fp_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// PosixStorage
-PosixStorage::PosixStorage(PosixConfig config)
-{
-}
+PosixStorage::PosixStorage(PosixConfig config) {}
 
-PosixStorage::~PosixStorage() {
-}
+PosixStorage::~PosixStorage() {}
 
-StoreResult PosixStorage::get_file_info(
-  const std::string &name,
-  FileInfo &file_info)
-{
+StoreResult PosixStorage::get_file_info(const std::string& name,
+                                        FileInfo& file_info) {
   struct stat stat_buf;
   int rc = stat(name.c_str(), &stat_buf);
   if (rc == 0 && !S_ISDIR(stat_buf.st_mode)) {
@@ -173,10 +158,8 @@ StoreResult PosixStorage::get_file_info(
   }
 }
 
-StoreResult PosixStorage::make_random_read_file(
-  const std::string& name,
-  RandomReadFile*& file)
-{
+StoreResult PosixStorage::make_random_read_file(const std::string& name,
+                                                RandomReadFile*& file) {
   FileInfo file_info;
   StoreResult result;
   if ((result = get_file_info(name, file_info)) != StoreResult::Success) {
@@ -186,17 +169,13 @@ StoreResult PosixStorage::make_random_read_file(
   return StoreResult::Success;
 }
 
-StoreResult PosixStorage::make_write_file(
-  const std::string& name,
-  WriteFile*& file)
-{
+StoreResult PosixStorage::make_write_file(const std::string& name,
+                                          WriteFile*& file) {
   file = new PosixWriteFile(name);
   return StoreResult::Success;
 }
 
-StoreResult PosixStorage::delete_file(
-  const std::string& name)
-{
+StoreResult PosixStorage::delete_file(const std::string& name) {
   FileInfo file_info;
   StoreResult result = get_file_info(name, file_info);
   if (result != StoreResult::Success) {
@@ -208,5 +187,4 @@ StoreResult PosixStorage::delete_file(
   }
   return StoreResult::Success;
 }
-
 }

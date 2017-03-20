@@ -20,38 +20,32 @@
 
 namespace storehouse {
 
-struct PosixConfig : public StorageConfig {
-};
+struct PosixConfig : public StorageConfig {};
 
 class PosixStorage : public StorageBackend {
-public:
+ public:
   PosixStorage(PosixConfig config);
 
   ~PosixStorage();
 
-  StoreResult get_file_info(
-    const std::string &name,
-    FileInfo &file_info) override;
+  StoreResult get_file_info(const std::string& name,
+                            FileInfo& file_info) override;
 
   /* make_random_read_file
    *
    */
-  StoreResult make_random_read_file(
-    const std::string& name,
-    RandomReadFile*& file) override;
+  StoreResult make_random_read_file(const std::string& name,
+                                    RandomReadFile*& file) override;
 
   /* make_write_file
    *
    */
-  StoreResult make_write_file(
-    const std::string& name,
-    WriteFile*& file) override;
+  StoreResult make_write_file(const std::string& name,
+                              WriteFile*& file) override;
 
-  StoreResult delete_file(
-    const std::string& name) override;
+  StoreResult delete_file(const std::string& name) override;
 
-protected:
+ protected:
   const std::string data_directory_;
 };
-
 }

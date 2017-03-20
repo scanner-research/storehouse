@@ -15,13 +15,13 @@
 
 #pragma once
 
-#include "storehouse/storage_config.h"
 #include "storehouse/storage_backend.h"
+#include "storehouse/storage_config.h"
 
-#include "googleapis/client/transport/http_transport.h"
-#include "googleapis/client/auth/oauth2_service_authorization.h"
-#include "googleapis/client/auth/oauth2_authorization.h"
 #include "google/storage_api/storage_service.h"
+#include "googleapis/client/auth/oauth2_authorization.h"
+#include "googleapis/client/auth/oauth2_service_authorization.h"
+#include "googleapis/client/transport/http_transport.h"
 
 #include <string>
 
@@ -38,40 +38,36 @@ struct GCSConfig : public StorageConfig {
 ////////////////////////////////////////////////////////////////////////////////
 /// GCSStorage
 class GCSStorage : public StorageBackend {
-public:
+ public:
   GCSStorage(GCSConfig config);
 
   ~GCSStorage();
 
-  StoreResult get_file_info(
-    const std::string &name,
-    FileInfo &file_info) override;
+  StoreResult get_file_info(const std::string& name,
+                            FileInfo& file_info) override;
 
   /* make_random_read_file
    *
    */
-  StoreResult make_random_read_file(
-    const std::string& name,
-    RandomReadFile*& file) override;
+  StoreResult make_random_read_file(const std::string& name,
+                                    RandomReadFile*& file) override;
 
   /* make_write_file
    *
    */
-  StoreResult make_write_file(
-    const std::string& name,
-    WriteFile*& file) override;
+  StoreResult make_write_file(const std::string& name,
+                              WriteFile*& file) override;
 
-protected:
+ protected:
   const std::string certificates_path_;
   const std::string key_;
   const std::string bucket_;
 
-private:
+ private:
   std::unique_ptr<googleapis::client::HttpTransportLayerConfig> config_;
   std::unique_ptr<googleapis::client::HttpTransport> transport_;
   std::unique_ptr<googleapis::client::OAuth2ServiceAccountFlow> flow_;
   std::unique_ptr<google_storage_api::StorageService> service_;
   googleapis::client::OAuth2Credential credential_;
 };
-
 }

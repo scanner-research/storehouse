@@ -25,8 +25,8 @@
 #endif
 #include "googleapis/client/transport/curl_http_transport.h"
 #include "googleapis/client/transport/http_authorization.h"
-#include "googleapis/client/transport/http_transport.h"
 #include "googleapis/client/transport/http_request_batch.h"
+#include "googleapis/client/transport/http_transport.h"
 #include "googleapis/client/util/status.h"
 #include "googleapis/client/util/uri_utils.h"
 #include "googleapis/strings/strcat.h"
@@ -34,8 +34,8 @@
 
 #include <glog/logging.h>
 
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
 using googleapis::client::HttpTransport;
 using googleapis::client::HttpTransportLayerConfig;
@@ -56,47 +56,36 @@ namespace storehouse {
 ////////////////////////////////////////////////////////////////////////////////
 /// GCSRandomReadFile
 class GCSRandomReadFile : public RandomReadFile {
-public:
-  GCSRandomReadFile(
-    HttpTransport* transport,
-    OAuth2Credential* credential,
-    const std::string& object_name,
-    const std::string& media_url,
-    size_t size)
+ public:
+  GCSRandomReadFile(HttpTransport* transport, OAuth2Credential* credential,
+                    const std::string& object_name,
+                    const std::string& media_url, size_t size)
     : transport_(transport),
       credential_(credential),
       object_name_(object_name),
       media_url_(media_url),
-      size_(size)
-  {
+      size_(size) {}
 
-  }
-
-  StoreResult read(
-    uint64_t offset,
-    size_t size,
-    uint8_t* data,
-    size_t& size_read) override
-  {
+  StoreResult read(uint64_t offset, size_t size, uint8_t* data,
+                   size_t& size_read) override {
     std::unique_ptr<HttpRequest> request(
       transport_->NewHttpRequest(HttpRequest::GET));
     request->set_url(media_url_.c_str());
     request->set_credential(credential_);
     // Set range (inclusive)
-    std::string range_str =
-      "bytes=" + std::to_string(offset) + "-" +
-      std::to_string(offset + size - 1);
+    std::string range_str = "bytes=" + std::to_string(offset) + "-" +
+                            std::to_string(offset + size - 1);
     request->AddHeader("Range", range_str);
 
     googleapis::util::Status status = request->Execute();
-    HttpResponse *response = request->response();
+    HttpResponse* response = request->response();
     if (!status.ok()) {
       switch (status.error_code()) {
-      case googleapis::util::error::DEADLINE_EXCEEDED: {
-        // Timeout error
-        return StoreResult::TransientFailure;
-      } default: {
-      }
+        case googleapis::util::error::DEADLINE_EXCEEDED: {
+          // Timeout error
+          return StoreResult::TransientFailure;
+        }
+        default: {}
       }
 
       // 416 Requested Range Not Satisfiable
@@ -127,11 +116,9 @@ public:
     return StoreResult::Success;
   }
 
-  const std::string path() override {
-    return object_name_;
-  }
+  const std::string path() override { return object_name_; }
 
-private:
+ private:
   HttpTransport* transport_;
   OAuth2Credential* credential_;
   const std::string object_name_;
@@ -142,18 +129,14 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 /// GCSAppendWriteFile
 class GCSWriteFile : public WriteFile {
-public:
-  GCSWriteFile(
-    google_storage_api::StorageService* service,
-    OAuth2Credential* credential,
-    const std::string& bucket_name,
-    const std::string& object_name)
+ public:
+  GCSWriteFile(google_storage_api::StorageService* service,
+               OAuth2Credential* credential, const std::string& bucket_name,
+               const std::string& object_name)
     : service_(service),
       credential_(credential),
       bucket_name_(bucket_name),
-      object_name_(object_name)
-  {
-  }
+      object_name_(object_name) {}
 
   StoreResult append(size_t size, const uint8_t* data) override {
     data_buffer_.insert(data_buffer_.end(), data, data + size);
@@ -171,10 +154,7 @@ public:
     // Create request to insert object
     std::unique_ptr<ObjectsResource_InsertMethod> method(
       service_->get_objects().NewInsertMethod(
-        credential_,
-        googleapis::StringPiece(bucket_name_),
-        nullptr,
-        nullptr,
+        credential_, googleapis::StringPiece(bucket_name_), nullptr, nullptr,
         reader));
 
     method->set_name(object_name_);
@@ -186,11 +166,11 @@ public:
     delete response_obj;
     if (!status.ok()) {
       switch (status.error_code()) {
-      case googleapis::util::error::DEADLINE_EXCEEDED: {
-        // Timeout error
-        return StoreResult::TransientFailure;
-      } default: {
-      }
+        case googleapis::util::error::DEADLINE_EXCEEDED: {
+          // Timeout error
+          return StoreResult::TransientFailure;
+        }
+        default: {}
       }
 
       LOG(FATAL) << "GCSWriteFile: save failed for object "
@@ -201,11 +181,9 @@ public:
     return StoreResult::Success;
   }
 
-  const std::string path() override {
-    return object_name_;
-  }
+  const std::string path() override { return object_name_; }
 
-private:
+ private:
   google_storage_api::StorageService* service_;
   OAuth2Credential* credential_;
 
@@ -216,12 +194,10 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 /// GCSStorage
-GCSStorage::GCSStorage(
-  GCSConfig config)
+GCSStorage::GCSStorage(GCSConfig config)
   : certificates_path_(config.certificates_path),
     key_(config.key),
-    bucket_(config.bucket)
-{
+    bucket_(config.bucket) {
   googleapis::util::Status status;
 
   HttpTransportLayerConfig* transport_config = new HttpTransportLayerConfig;
@@ -229,21 +205,20 @@ GCSStorage::GCSStorage(
     certificates_path_);
 
   config_.reset(transport_config);
-  HttpTransportFactory* factory =
-    new CurlHttpTransportFactory(config_.get());
+  HttpTransportFactory* factory = new CurlHttpTransportFactory(config_.get());
   config_->ResetDefaultTransportFactory(factory);
 
   transport_.reset(config_->NewDefaultTransportOrDie());
 
-  flow_.reset(new OAuth2ServiceAccountFlow(
-                config_->NewDefaultTransportOrDie()));
+  flow_.reset(
+    new OAuth2ServiceAccountFlow(config_->NewDefaultTransportOrDie()));
   flow_->InitFromJson(key_);
 
   flow_->set_default_scopes(
     google_storage_api::StorageService::SCOPES::DEVSTORAGE_FULL_CONTROL);
 
   service_.reset(new google_storage_api::StorageService(
-                   config_->NewDefaultTransportOrDie()));
+    config_->NewDefaultTransportOrDie()));
 
   OAuth2RequestOptions options;
   status = flow_->PerformRefreshToken(options, &credential_);
@@ -256,35 +231,32 @@ GCSStorage::GCSStorage(
   credential_.set_flow(flow_.get());
 }
 
-GCSStorage::~GCSStorage() {
-}
+GCSStorage::~GCSStorage() {}
 
-StoreResult GCSStorage::get_file_info(
-  const std::string &name,
-  FileInfo &file_info)
-{
+StoreResult GCSStorage::get_file_info(const std::string& name,
+                                      FileInfo& file_info) {
   std::unique_ptr<ObjectsResource_GetMethod> method(
     service_->get_objects().NewGetMethod(&credential_,
                                          googleapis::StringPiece(bucket_),
                                          googleapis::StringPiece(name)));
 
-  google_storage_api::Object* response_obj =
-    google_storage_api::Object::New();
+  google_storage_api::Object* response_obj = google_storage_api::Object::New();
   googleapis::util::Status status =
     method->ExecuteAndParseResponse(response_obj);
   if (!status.ok()) {
     switch (status.error_code()) {
-    case googleapis::util::error::DEADLINE_EXCEEDED: {
-      // Timeout error
-      return StoreResult::TransientFailure;
-    } case googleapis::util::error::NOT_FOUND: {
+      case googleapis::util::error::DEADLINE_EXCEEDED: {
+        // Timeout error
+        return StoreResult::TransientFailure;
+      }
+      case googleapis::util::error::NOT_FOUND: {
         return StoreResult::FileDoesNotExist;
-      } default: {
-        }
+      }
+      default: {}
     }
     LOG(FATAL) << "GCSStorage: get_file_info "
-               << "(" << name.c_str() << ") error: "
-               << status.error_message().c_str();
+               << "(" << name.c_str()
+               << ") error: " << status.error_message().c_str();
   }
 
   file_info.size = response_obj->get_size();
@@ -292,32 +264,28 @@ StoreResult GCSStorage::get_file_info(
   return StoreResult::Success;
 }
 
-
-StoreResult GCSStorage::make_random_read_file(
-  const std::string& name,
-  RandomReadFile*& file)
-{
+StoreResult GCSStorage::make_random_read_file(const std::string& name,
+                                              RandomReadFile*& file) {
   // Create request to get object metadata
   std::unique_ptr<ObjectsResource_GetMethod> method(
     service_->get_objects().NewGetMethod(&credential_,
                                          googleapis::StringPiece(bucket_),
                                          googleapis::StringPiece(name)));
 
-  google_storage_api::Object* response_obj =
-    google_storage_api::Object::New();
+  google_storage_api::Object* response_obj = google_storage_api::Object::New();
   googleapis::util::Status status =
     method->ExecuteAndParseResponse(response_obj);
   if (!status.ok()) {
     switch (status.error_code()) {
-    case googleapis::util::error::DEADLINE_EXCEEDED: {
-      // Timeout error
-      return StoreResult::TransientFailure;
-    } default: {
-    }
+      case googleapis::util::error::DEADLINE_EXCEEDED: {
+        // Timeout error
+        return StoreResult::TransientFailure;
+      }
+      default: {}
     }
     LOG(FATAL) << "GCSStorage: make_random_read_file "
-               << "(" << name.c_str() << ") error: "
-               << status.error_message().c_str();
+               << "(" << name.c_str()
+               << ") error: " << status.error_message().c_str();
     assert(status.ok());
   }
 
@@ -330,12 +298,9 @@ StoreResult GCSStorage::make_random_read_file(
   return StoreResult::Success;
 }
 
-StoreResult GCSStorage::make_write_file(
-  const std::string& name,
-  WriteFile*& file)
-{
+StoreResult GCSStorage::make_write_file(const std::string& name,
+                                        WriteFile*& file) {
   file = new GCSWriteFile(service_.get(), &credential_, bucket_, name);
   return StoreResult::Success;
 }
-
 }

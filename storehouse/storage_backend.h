@@ -19,10 +19,10 @@
 
 #include <glog/logging.h>
 
-#include <vector>
-#include <string>
-#include <memory>
 #include <unistd.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace storehouse {
 
@@ -49,19 +49,13 @@ struct FileInfo {
 ////////////////////////////////////////////////////////////////////////////////
 /// RandomReadFile
 class RandomReadFile {
-public:
-  virtual ~RandomReadFile() {};
+ public:
+  virtual ~RandomReadFile(){};
 
-  StoreResult read(
-    uint64_t offset,
-    size_t size,
-    std::vector<uint8_t>& data);
+  StoreResult read(uint64_t offset, size_t size, std::vector<uint8_t>& data);
 
-  virtual StoreResult read(
-    uint64_t offset,
-    size_t size,
-    uint8_t* data,
-    size_t& size_read) = 0;
+  virtual StoreResult read(uint64_t offset, size_t size, uint8_t* data,
+                           size_t& size_read) = 0;
 
   virtual StoreResult get_size(uint64_t& size) = 0;
 
@@ -71,8 +65,8 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 /// WriteFile
 class WriteFile {
-public:
-  virtual ~WriteFile() {};
+ public:
+  virtual ~WriteFile(){};
 
   StoreResult append(const std::vector<uint8_t>& data);
 
@@ -86,51 +80,44 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 /// StorageBackend
 class StorageBackend {
-public:
+ public:
   virtual ~StorageBackend() {}
 
-  static StorageBackend* make_from_config(
-    const StorageConfig* config);
+  static StorageBackend* make_from_config(const StorageConfig* config);
 
   /* get_file_info
    *
    */
-  virtual StoreResult get_file_info(
-    const std::string &name,
-    FileInfo &file_info) = 0;
+  virtual StoreResult get_file_info(const std::string& name,
+                                    FileInfo& file_info) = 0;
 
   /* make_random_read_file
    *
    */
-  virtual StoreResult make_random_read_file(
-    const std::string& name,
-    RandomReadFile*& file) = 0;
+  virtual StoreResult make_random_read_file(const std::string& name,
+                                            RandomReadFile*& file) = 0;
 
   /* make_write_file
    *
    */
-  virtual StoreResult make_write_file(
-    const std::string& name,
-    WriteFile*& file) = 0;
+  virtual StoreResult make_write_file(const std::string& name,
+                                      WriteFile*& file) = 0;
 
   /* delete_File
    *
    */
-  virtual StoreResult delete_file(
-    const std::string& name) = 0;
+  virtual StoreResult delete_file(const std::string& name) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Utilities
-StoreResult make_unique_random_read_file(
-  StorageBackend* storage,
-  const std::string& name,
-  std::unique_ptr<RandomReadFile>& file);
+StoreResult make_unique_random_read_file(StorageBackend* storage,
+                                         const std::string& name,
+                                         std::unique_ptr<RandomReadFile>& file);
 
-StoreResult make_unique_write_file(
-  StorageBackend* storage,
-  const std::string& name,
-  std::unique_ptr<WriteFile>& file);
+StoreResult make_unique_write_file(StorageBackend* storage,
+                                   const std::string& name,
+                                   std::unique_ptr<WriteFile>& file);
 
 std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos);
 
@@ -160,19 +147,18 @@ void exit_on_error(StoreResult result);
     }                                                                   \
   } while (0);
 
-#define BACKOFF_FAIL(expression__)              \
-  do {                                          \
-    storehouse::StoreResult result___;          \
-    EXP_BACKOFF(expression__, result___);       \
-    storehouse::exit_on_error(result___);       \
+#define BACKOFF_FAIL(expression__)        \
+  do {                                    \
+    storehouse::StoreResult result___;    \
+    EXP_BACKOFF(expression__, result___); \
+    storehouse::exit_on_error(result___); \
   } while (0);
 
-#define RETURN_ON_ERROR(expression)                        \
-  do {                                                     \
-    const storehouse::StoreResult result = (expression);   \
-    if (result != storehouse::StoresResult::Success) {     \
-      return result;                                       \
-    }                                                      \
+#define RETURN_ON_ERROR(expression)                      \
+  do {                                                   \
+    const storehouse::StoreResult result = (expression); \
+    if (result != storehouse::StoresResult::Success) {   \
+      return result;                                     \
+    }                                                    \
   } while (0);
-
 }
