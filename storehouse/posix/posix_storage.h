@@ -47,6 +47,9 @@ public:
     const std::string& name,
     WriteFile*& file) override;
 
+  StoreResult delete_file(
+    const std::string& name) override;
+
 protected:
   const std::string data_directory_;
 };

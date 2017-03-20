@@ -29,6 +29,9 @@ public:
     const std::string& name,
     WriteFile*& file) override;
 
+  StoreResult delete_file(
+    const std::string& name) override;
+
 private:
   Aws::SDKOptions sdk_options_;
   Aws::S3::S3Client* client_;

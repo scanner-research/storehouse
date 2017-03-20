@@ -82,4 +82,10 @@ StoreResult S3Storage::make_write_file(
   return StoreResult::Success;
 }
 
+StoreResult S3Storage::delete_file(
+  const std::string& name)
+{
+  return StoreResult::Success;
+}
+
 }

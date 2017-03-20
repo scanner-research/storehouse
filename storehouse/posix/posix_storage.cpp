@@ -194,4 +194,19 @@ StoreResult PosixStorage::make_write_file(
   return StoreResult::Success;
 }
 
+StoreResult PosixStorage::delete_file(
+  const std::string& name)
+{
+  FileInfo file_info;
+  StoreResult result = get_file_info(name, file_info);
+  if (result != StoreResult::Success) {
+    return result;
+  }
+
+  if (remove(name.c_str()) < 0) {
+    return StoreResult::RemoveFailure;
+  }
+  return StoreResult::Success;
+}
+
 }

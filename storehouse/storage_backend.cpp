@@ -68,6 +68,10 @@ std::string store_result_to_string(StoreResult result) {
     return "EndOfFile";
   case StoreResult::TransientFailure:
     return "TransientFailure";
+  case StoreResult::ReadFailure:
+    return "ReadFailure";
+  case StoreResult::RemoveFailure:
+    return "RemoveFailure";
   }
   return "<Undefined>";
 }

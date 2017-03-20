@@ -34,7 +34,8 @@ enum class StoreResult {
   FileExists,
   FileDoesNotExist,
   TransientFailure,
-  ReadFailure
+  ReadFailure,
+  RemoveFailure,
 };
 
 std::string store_result_to_string(StoreResult result);
@@ -112,6 +113,11 @@ public:
     const std::string& name,
     WriteFile*& file) = 0;
 
+  /* delete_File
+   *
+   */
+  virtual StoreResult delete_file(
+    const std::string& name) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
