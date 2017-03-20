@@ -45,6 +45,9 @@ class PosixStorage : public StorageBackend {
 
   StoreResult delete_file(const std::string& name) override;
 
+  StoreResult delete_dir(const std::string& name,
+                         bool recursive = false) override;
+
  protected:
   const std::string data_directory_;
 };

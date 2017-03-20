@@ -67,4 +67,8 @@ StoreResult S3Storage::make_write_file(const std::string& name,
 StoreResult S3Storage::delete_file(const std::string& name) {
   return StoreResult::Success;
 }
+
+StoreResult S3Storage::delete_dir(const std::string& name, bool recursive) {
+  return StoreResult::Success;
+}
 }

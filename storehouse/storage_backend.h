@@ -103,10 +103,16 @@ class StorageBackend {
   virtual StoreResult make_write_file(const std::string& name,
                                       WriteFile*& file) = 0;
 
-  /* delete_File
+  /* delete_file
    *
    */
   virtual StoreResult delete_file(const std::string& name) = 0;
+
+  /* delete_dir
+   *
+   */
+  virtual StoreResult delete_dir(const std::string& name,
+                                 bool recursive = false) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

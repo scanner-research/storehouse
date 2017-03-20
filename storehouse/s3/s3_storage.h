@@ -28,6 +28,9 @@ class S3Storage : public StorageBackend {
 
   StoreResult delete_file(const std::string& name) override;
 
+  StoreResult delete_dir(const std::string& name,
+                         bool recursive = false) override;
+
  private:
   Aws::SDKOptions sdk_options_;
   Aws::S3::S3Client* client_;

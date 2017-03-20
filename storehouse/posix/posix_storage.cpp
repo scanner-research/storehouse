@@ -18,6 +18,7 @@
 
 #include <glog/logging.h>
 
+#include <ftw.h>
 #include <libgen.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -185,6 +186,31 @@ StoreResult PosixStorage::delete_file(const std::string& name) {
   if (remove(name.c_str()) < 0) {
     return StoreResult::RemoveFailure;
   }
+  return StoreResult::Success;
+}
+
+int rm_r(const char* path, const struct stat* info, int tflag,
+         struct FTW* ftwbuf) {
+  if (tflag == FTW_F) {
+    return remove(path);
+  } else if (tflag == FTW_D || tflag == FTW_DP) {
+    return rmdir(path);
+  } else {
+    return -1;
+  }
+}
+
+StoreResult PosixStorage::delete_dir(const std::string& name, bool recursive) {
+  if (recursive) {
+    if (nftw(name.c_str(), rm_r, 20, FTW_DEPTH | FTW_PHYS) < 0) {
+      return StoreResult::RemoveFailure;
+    }
+  }
+
+  if (rmdir(name.c_str()) < 0) {
+    return StoreResult::RemoveFailure;
+  }
+
   return StoreResult::Success;
 }
 }
