@@ -60,6 +60,7 @@ void write_all_file(StorageBackend* backend, const std::string& name,
   WriteFile* file = make_write_file(backend, name);
   w_append(file, data);
   w_save(file);
+  delete file;
 }
 
 void delete_file(StorageBackend* backend, const std::string& name) {
