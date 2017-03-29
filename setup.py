@@ -2,11 +2,10 @@ from setuptools import setup
 import os
 
 os.system('ln -s ../build/libstorehouse.so storehousepy')
-os.system('ln -s ../build/storehousepy.so storehousepy')
 
 setup(
     name='storehouse',
-    version='0.1.5',
+    version='0.1.7',
     url='https://github.com/scanner-research/storehouse',
     author='Alex Poms and Will Crichton',
     author_email='wcrichto@cs.stanford.edu',
