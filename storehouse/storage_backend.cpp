@@ -30,7 +30,12 @@ StoreResult RandomReadFile::read(uint64_t offset, size_t size,
   size_t size_read;
   StoreResult result =
     this->read(offset, size, data.data() + orig_data_size, size_read);
-  data.resize(orig_data_size + size_read);
+  if (result != StoreResult::Success) {
+    return result;
+  }
+  if (size_read != size) {
+    return StoreResult::ReadFailure:
+  }
   return result;
 }
 
