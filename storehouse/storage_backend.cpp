@@ -34,6 +34,8 @@ StoreResult RandomReadFile::read(uint64_t offset, size_t size,
     return result;
   }
   if (size_read != size) {
+    LOG(ERROR) << "Expected read of size " << size << " but only read "
+               << size_read;
     return StoreResult::ReadFailure;
   }
   return result;

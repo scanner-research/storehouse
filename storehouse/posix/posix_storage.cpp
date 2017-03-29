@@ -32,6 +32,9 @@ class PosixRandomReadFile : public RandomReadFile {
  public:
   PosixRandomReadFile(const std::string& file_path) : file_path_(file_path) {
     fp_ = fopen(file_path.c_str(), "r");
+    if (fp_ == NULL) {
+      LOG(ERROR) << "Error opening file: " << strerror(errno);
+    }
     position_ = 0;
   }
 
