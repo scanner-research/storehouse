@@ -34,7 +34,7 @@ StoreResult RandomReadFile::read(uint64_t offset, size_t size,
     return result;
   }
   if (size_read != size) {
-    return StoreResult::ReadFailure:
+    return StoreResult::ReadFailure;
   }
   return result;
 }
