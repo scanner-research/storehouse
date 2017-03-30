@@ -36,6 +36,7 @@ enum class StoreResult {
   TransientFailure,
   ReadFailure,
   RemoveFailure,
+  SaveFailure,
 };
 
 std::string store_result_to_string(StoreResult result);

@@ -85,7 +85,10 @@ BOOST_PYTHON_MODULE(libstorehouse) {
     // .staticmethod("make_gcs_config")
     .def("make_s3_config", &StorageConfig::make_s3_config,
          return_value_policy<manage_new_object>())
-    .staticmethod("make_s3_config");
+    .staticmethod("make_s3_config")
+    .def("make_gcs_config", &StorageConfig::make_gcs_config,
+         return_value_policy<manage_new_object>())
+    .staticmethod("make_gcs_config");
   class_<StorageBackend, boost::noncopyable>("StorageBackend", no_init)
     .def("make_from_config", &StorageBackend::make_from_config,
          return_value_policy<manage_new_object>())

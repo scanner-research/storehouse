@@ -10,6 +10,8 @@ namespace storehouse {
 
 struct S3Config : public StorageConfig {
   std::string bucket;
+  std::string endpointOverride;
+  std::string endpointRegion;
 };
 
 class S3Storage : public StorageBackend {

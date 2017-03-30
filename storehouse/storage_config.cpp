@@ -39,4 +39,13 @@ StorageConfig* StorageConfig::make_s3_config(const std::string& bucket) {
   config->bucket = bucket;
   return config;
 }
+
+StorageConfig* StorageConfig::make_gcs_config(const std::string& bucket) {
+		S3Config* config = new S3Config;
+  	config->bucket = bucket;
+  	config->endpointOverride = "storage.googleapis.com";
+  	config->endpointRegion = "US";
+
+  	return config;
+}
 }

@@ -2,6 +2,12 @@
 
 #include <aws/s3/model/Bucket.h>
 #include <aws/s3/model/GetObjectRequest.h>
+#include <aws/s3/model/PutObjectRequest.h>
+#include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/core/client/DefaultRetryStrategy.h>
+#include <aws/core/Aws.h>
+#include <fstream>
+#include <sstream>
 
 namespace storehouse {
 
@@ -11,23 +17,51 @@ class S3RandomReadFile : public RandomReadFile {
  public:
   S3RandomReadFile(const std::string& name, const std::string& bucket,
                    S3Client* client)
-    : name_(name), bucket_(bucket), client_(client) {}
+      : name_(name), bucket_(bucket), client_(client) {}
 
   StoreResult read(uint64_t offset, size_t size, uint8_t* data,
                    size_t& size_read) override {
     Aws::S3::Model::GetObjectRequest object_request;
-    const Aws::String bucket = bucket_.c_str();
-    const Aws::String name = name_.c_str();
-    object_request.WithBucket(bucket).WithKey(name);
-    auto outcome = client_->GetObject(object_request);
-    if (!outcome.IsSuccess()) {
-      LOG(FATAL) << outcome.GetError().GetMessage();
-    }
 
-    size_read = outcome.GetResult().GetBody().rdbuf()->sgetn((char*)data, size);
+    std::stringstream range_request;
+    range_request << "bytes=" << offset << "-" << (offset + size - 1);
+    
+    object_request.WithBucket(bucket_).WithKey(name_).WithRange(range_request.str());
+
+    auto get_object_outcome = client_->GetObject(object_request);
+
+    if (get_object_outcome.IsSuccess()) {
+      size_read = get_object_outcome.GetResult().GetContentLength();
+      auto file_stream_ = &get_object_outcome.GetResult().GetBody();
+
+      return StoreResult::Success;
+    } else {
+      LOG(WARNING) << "Error opening file: " <<
+      get_full_path() << " - " << 
+      get_object_outcome.GetError().GetMessage();
+
+      return StoreResult::ReadFailure;
+    }
   }
 
-  StoreResult get_size(uint64_t& size) override { return StoreResult::Success; }
+  StoreResult get_size(uint64_t& size) override { 
+    Aws::S3::Model::HeadObjectRequest object_request;
+    object_request.WithBucket(bucket_).WithKey(name_);
+
+    auto head_object_outcome = client_->HeadObject(object_request);
+
+    if (head_object_outcome.IsSuccess()) {
+      size = (uint64_t)head_object_outcome.GetResult().GetContentLength();
+    } else {
+      LOG(WARNING) << "Error getting size - HeadObject error: " <<
+          head_object_outcome.GetError().GetExceptionName() << " " <<
+          head_object_outcome.GetError().GetMessage() << 
+          "for object: " << get_full_path();
+      return StoreResult::ReadFailure;
+    }
+
+    return StoreResult::Success; 
+  }
 
   const std::string path() override { return name_; }
 
@@ -35,12 +69,89 @@ class S3RandomReadFile : public RandomReadFile {
   std::string bucket_;
   std::string name_;
   S3Client* client_;
+
+  std::string get_full_path() {
+    return bucket_ + "/" + name_;
+  }
 };
+
+class S3WriteFile : public WriteFile {
+ public:
+  S3WriteFile(const std::string& name, const std::string& bucket,
+                   S3Client* client)
+      : name_(name), bucket_(bucket), client_(client) {
+    tmpfilename_ = strdup("/tmp/scannerXXXXXX");
+    int temp_fd;
+
+    temp_fd = mkstemp(tmpfilename_);
+    tfp_ = fdopen(temp_fd, "wb+");
+
+    LOG_IF(FATAL, tfp_ == NULL) << "Could not create temp file for writing";
+  }
+
+  ~S3WriteFile() {
+    save();
+    free(tmpfilename_);
+    unlink(tmpfilename_);
+    if (tfp_ != NULL) {
+      std::fclose(tfp_);
+    }
+  }
+
+  StoreResult append(size_t size, const uint8_t* data) override {
+    size_t size_written = fwrite(data, sizeof(uint8_t), size, tfp_);
+    LOG_IF(FATAL, size_written != size)
+      << "S3WriteFile: did not write all " << size << " "
+      << "bytes for to tmp file for file " << get_full_path() << ".";
+    return StoreResult::Success;
+  }
+
+  StoreResult save() override {
+    std::fflush(tfp_);
+
+    auto input_data = Aws::MakeShared<Aws::FStream>("PutObjectInputStream",
+            tmpfilename_, std::ios_base::in | std::ios_base::binary);
+
+    Aws::S3::Model::PutObjectRequest put_object_request;
+    put_object_request.WithKey(name_).WithBucket(bucket_);
+
+    put_object_request.SetBody(input_data);
+    auto put_object_outcome = client_->PutObject(put_object_request);
+
+    if(!put_object_outcome.IsSuccess()) {
+      LOG(WARNING) << "Save Error: error while putting object: " <<
+          get_full_path() << " - " << 
+          put_object_outcome.GetError().GetExceptionName() << " " << 
+          put_object_outcome.GetError().GetMessage();
+      return StoreResult::SaveFailure;
+    }
+    
+    return StoreResult::Success;
+  }
+
+  const std::string path() override { return name_; }
+
+ private:
+  std::string bucket_;
+  std::string name_;
+  S3Client* client_;
+  FILE* tfp_;
+  char* tmpfilename_;
+
+  std::string get_full_path() {
+    return bucket_ + "/" + name_;
+  }
+};
+
 
 S3Storage::S3Storage(S3Config config) : bucket_(config.bucket) {
   Aws::InitAPI(sdk_options_);
+  Aws::Client::ClientConfiguration cc;
+  cc.scheme = Aws::Http::Scheme::HTTP;
+  cc.region = config.endpointRegion;
+  cc.endpointOverride = config.endpointOverride;
 
-  client_ = new S3Client;
+  client_ = new S3Client(cc);
 }
 
 S3Storage::~S3Storage() {
@@ -50,17 +161,21 @@ S3Storage::~S3Storage() {
 
 StoreResult S3Storage::get_file_info(const std::string& name,
                                      FileInfo& file_info) {
-  return StoreResult::Success;
+  S3RandomReadFile s3read_file(bucket_, name, client_);
+  auto result = s3read_file.get_size(file_info.size);
+  return result;
 }
 
 StoreResult S3Storage::make_random_read_file(const std::string& name,
                                              RandomReadFile*& file) {
+  
   file = new S3RandomReadFile(name, bucket_, client_);
   return StoreResult::Success;
 }
 
 StoreResult S3Storage::make_write_file(const std::string& name,
                                        WriteFile*& file) {
+  file = new S3WriteFile(name, bucket_, client_);
   return StoreResult::Success;
 }
 
