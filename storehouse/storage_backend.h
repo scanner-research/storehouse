@@ -37,6 +37,7 @@ enum class StoreResult {
   ReadFailure,
   RemoveFailure,
   SaveFailure,
+  MkDirFailure,
 };
 
 std::string store_result_to_string(StoreResult result);
@@ -103,6 +104,16 @@ class StorageBackend {
    */
   virtual StoreResult make_write_file(const std::string& name,
                                       WriteFile*& file) = 0;
+
+  /* make_dir
+   *
+   */
+  virtual StoreResult make_dir(const std::string& name) = 0;
+
+  /* check_folder_exists
+   *
+   */
+  virtual StoreResult check_file_exists(const std::string& name) = 0;
 
   /* delete_file
    *

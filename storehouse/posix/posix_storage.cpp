@@ -179,6 +179,23 @@ StoreResult PosixStorage::make_write_file(const std::string& name,
   return StoreResult::Success;
 }
 
+StoreResult PosixStorage::make_dir(const std::string& name) {
+  if (mkdir(name.c_str(), 0700) < 0) {
+    return StoreResult::MkDirFailure;
+  }
+
+  return StoreResult::Success;
+}
+
+StoreResult PosixStorage::check_file_exists(const std::string& name) {
+  struct stat st;
+  if(stat(name.c_str(), &st) == 0) {
+    return StoreResult::FileExists;
+  } else {
+    return StoreResult::FileDoesNotExist;
+  }
+}
+
 StoreResult PosixStorage::delete_file(const std::string& name) {
   FileInfo file_info;
   StoreResult result = get_file_info(name, file_info);

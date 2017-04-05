@@ -75,6 +75,10 @@ std::string store_result_to_string(StoreResult result) {
       return "ReadFailure";
     case StoreResult::RemoveFailure:
       return "RemoveFailure";
+    case StoreResult::SaveFailure:
+      return "SaveFailure";
+    case StoreResult::MkDirFailure:
+      return "MkDirFailure";
   }
   return "<Undefined>";
 }

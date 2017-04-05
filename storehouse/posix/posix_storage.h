@@ -43,6 +43,10 @@ class PosixStorage : public StorageBackend {
   StoreResult make_write_file(const std::string& name,
                               WriteFile*& file) override;
 
+  StoreResult make_dir(const std::string& name) override;
+
+  StoreResult check_file_exists(const std::string& name) override;
+
   StoreResult delete_file(const std::string& name) override;
 
   StoreResult delete_dir(const std::string& name,

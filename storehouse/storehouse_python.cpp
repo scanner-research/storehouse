@@ -63,6 +63,22 @@ void write_all_file(StorageBackend* backend, const std::string& name,
   delete file;
 }
 
+void make_dir(StorageBackend* backend, const std::string& name) {
+  attempt(backend->make_dir(name));
+}
+
+bool check_file_exists(StorageBackend* backend, const std::string& name) {
+  StoreResult result = backend->check_file_exists(name);
+
+  if (result == StoreResult::FileExists) {
+    return true;
+  } else if (result == StoreResult::FileDoesNotExist) {
+    return false;
+  } else {
+    throw result;
+  }
+}
+
 void delete_file(StorageBackend* backend, const std::string& name) {
   attempt(backend->delete_file(name));
 }
@@ -99,6 +115,8 @@ BOOST_PYTHON_MODULE(libstorehouse) {
          return_value_policy<manage_new_object>())
     .def("read", &read_all_file)
     .def("write", &write_all_file)
+    .def("make_dir", &make_dir)
+    .def("check_file_exists", &check_file_exists)
     .def("delete_file", &delete_file)
     .def("delete_dir", &delete_dir);
   class_<RandomReadFile, boost::noncopyable>("RandomReadFile", no_init)

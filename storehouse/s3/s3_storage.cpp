@@ -19,12 +19,27 @@ class S3RandomReadFile : public RandomReadFile {
                    S3Client* client)
       : name_(name), bucket_(bucket), client_(client) {}
 
-  StoreResult read(uint64_t offset, size_t size, uint8_t* data,
+  StoreResult read(uint64_t offset, size_t requested_size, uint8_t* data,
                    size_t& size_read) override {
+    uint64_t file_size;
+    auto result = get_size(file_size);
+    int64_t size_to_read = std::min((int64_t)(file_size - offset), (int64_t)requested_size);
+    size_to_read = std::max(size_to_read, (int64_t)0);
+
+    size_read = 0;
+    if (result != StoreResult::Success 
+        || (size_to_read == 0 && requested_size == 0)) {
+      return result;
+    }
+
+    if (size_to_read == 0 && requested_size > 0) {
+      return StoreResult::EndOfFile;
+    }
+
     Aws::S3::Model::GetObjectRequest object_request;
 
     std::stringstream range_request;
-    range_request << "bytes=" << offset << "-" << (offset + size - 1);
+    range_request << "bytes=" << offset << "-" << (offset + size_to_read - 1);
     
     object_request.WithBucket(bucket_).WithKey(name_).WithRange(range_request.str());
 
@@ -32,13 +47,17 @@ class S3RandomReadFile : public RandomReadFile {
 
     if (get_object_outcome.IsSuccess()) {
       size_read = get_object_outcome.GetResult().GetContentLength();
-      auto file_stream_ = &get_object_outcome.GetResult().GetBody();
+      get_object_outcome.GetResult().GetBody().
+          rdbuf()->sgetn((char*)data, size_read);
 
+      if (size_read != requested_size) {
+        return StoreResult::EndOfFile;
+      }
       return StoreResult::Success;
     } else {
       LOG(WARNING) << "Error opening file: " <<
-      get_full_path() << " - " << 
-      get_object_outcome.GetError().GetMessage();
+          get_full_path() << " - " << 
+          get_object_outcome.GetError().GetMessage();
 
       return StoreResult::ReadFailure;
     }
@@ -56,7 +75,7 @@ class S3RandomReadFile : public RandomReadFile {
       LOG(WARNING) << "Error getting size - HeadObject error: " <<
           head_object_outcome.GetError().GetExceptionName() << " " <<
           head_object_outcome.GetError().GetMessage() << 
-          "for object: " << get_full_path();
+          " for object: " << get_full_path();
       return StoreResult::ReadFailure;
     }
 
@@ -143,9 +162,16 @@ class S3WriteFile : public WriteFile {
   }
 };
 
+uint64_t S3Storage::num_clients = 0;
+std::mutex S3Storage::num_clients_mutex;
 
 S3Storage::S3Storage(S3Config config) : bucket_(config.bucket) {
-  Aws::InitAPI(sdk_options_);
+  std::lock_guard<std::mutex> guard(num_clients_mutex);
+  if (num_clients == 0) {
+    Aws::InitAPI(sdk_options_);
+  }
+  num_clients++;
+  
   Aws::Client::ClientConfiguration cc;
   cc.scheme = Aws::Http::Scheme::HTTP;
   cc.region = config.endpointRegion;
@@ -155,13 +181,18 @@ S3Storage::S3Storage(S3Config config) : bucket_(config.bucket) {
 }
 
 S3Storage::~S3Storage() {
+  std::lock_guard<std::mutex> guard(num_clients_mutex);
   delete client_;
-  Aws::ShutdownAPI(sdk_options_);
+
+  num_clients--;
+  if (num_clients == 0) {
+    Aws::InitAPI(sdk_options_);
+  }
 }
 
 StoreResult S3Storage::get_file_info(const std::string& name,
                                      FileInfo& file_info) {
-  S3RandomReadFile s3read_file(bucket_, name, client_);
+  S3RandomReadFile s3read_file(name, bucket_, client_);
   auto result = s3read_file.get_size(file_info.size);
   return result;
 }
@@ -176,6 +207,23 @@ StoreResult S3Storage::make_random_read_file(const std::string& name,
 StoreResult S3Storage::make_write_file(const std::string& name,
                                        WriteFile*& file) {
   file = new S3WriteFile(name, bucket_, client_);
+  return StoreResult::Success;
+}
+
+StoreResult S3Storage::check_file_exists(const std::string& name) {
+    Aws::S3::Model::HeadObjectRequest object_request;
+    object_request.WithBucket(bucket_).WithKey(name);
+
+    auto head_object_outcome = client_->HeadObject(object_request);
+
+    if (head_object_outcome.IsSuccess()) {
+      return StoreResult::FileExists;
+    } else {
+      return StoreResult::FileDoesNotExist;
+    }
+}
+
+StoreResult S3Storage::make_dir(const std::string& name) {
   return StoreResult::Success;
 }
 

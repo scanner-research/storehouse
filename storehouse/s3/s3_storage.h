@@ -28,6 +28,10 @@ class S3Storage : public StorageBackend {
   StoreResult make_write_file(const std::string& name,
                               WriteFile*& file) override;
 
+  StoreResult make_dir(const std::string& name) override;
+
+  StoreResult check_file_exists(const std::string& name) override;
+
   StoreResult delete_file(const std::string& name) override;
 
   StoreResult delete_dir(const std::string& name,
@@ -37,5 +41,8 @@ class S3Storage : public StorageBackend {
   Aws::SDKOptions sdk_options_;
   Aws::S3::S3Client* client_;
   std::string bucket_;
+
+  static uint64_t num_clients;
+  static std::mutex num_clients_mutex;
 };
 }
