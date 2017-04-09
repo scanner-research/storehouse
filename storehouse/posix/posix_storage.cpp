@@ -154,10 +154,17 @@ StoreResult PosixStorage::get_file_info(const std::string& name,
                                         FileInfo& file_info) {
   struct stat stat_buf;
   int rc = stat(name.c_str(), &stat_buf);
-  if (rc == 0 && !S_ISDIR(stat_buf.st_mode)) {
+  if (rc == 0) {
+    file_info.file_is_folder = false;
+    if (S_ISDIR(stat_buf.st_mode)) {
+      file_info.file_is_folder = true;
+    }
+
     file_info.size = stat_buf.st_size;
+    file_info.file_exists = true;
     return StoreResult::Success;
   } else {
+    file_info.file_exists = false;
     return StoreResult::FileDoesNotExist;
   }
 }
@@ -185,15 +192,6 @@ StoreResult PosixStorage::make_dir(const std::string& name) {
   }
 
   return StoreResult::Success;
-}
-
-StoreResult PosixStorage::check_file_exists(const std::string& name) {
-  struct stat st;
-  if(stat(name.c_str(), &st) == 0) {
-    return StoreResult::FileExists;
-  } else {
-    return StoreResult::FileDoesNotExist;
-  }
 }
 
 StoreResult PosixStorage::delete_file(const std::string& name) {

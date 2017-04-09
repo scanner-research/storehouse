@@ -186,20 +186,24 @@ S3Storage::~S3Storage() {
 
   num_clients--;
   if (num_clients == 0) {
-    Aws::InitAPI(sdk_options_);
+    Aws::ShutdownAPI(sdk_options_);
   }
 }
 
 StoreResult S3Storage::get_file_info(const std::string& name,
                                      FileInfo& file_info) {
   S3RandomReadFile s3read_file(name, bucket_, client_);
+  file_info.file_exists = false;
+  file_info.file_is_folder = (name[name.length()-1] == '/');
   auto result = s3read_file.get_size(file_info.size);
+  if (result == StoreResult::Success) {
+  	file_info.file_exists = true;
+  }
   return result;
 }
 
 StoreResult S3Storage::make_random_read_file(const std::string& name,
                                              RandomReadFile*& file) {
-  
   file = new S3RandomReadFile(name, bucket_, client_);
   return StoreResult::Success;
 }
@@ -210,20 +214,18 @@ StoreResult S3Storage::make_write_file(const std::string& name,
   return StoreResult::Success;
 }
 
-StoreResult S3Storage::check_file_exists(const std::string& name) {
-    Aws::S3::Model::HeadObjectRequest object_request;
-    object_request.WithBucket(bucket_).WithKey(name);
-
-    auto head_object_outcome = client_->HeadObject(object_request);
-
-    if (head_object_outcome.IsSuccess()) {
-      return StoreResult::FileExists;
-    } else {
-      return StoreResult::FileDoesNotExist;
-    }
-}
-
 StoreResult S3Storage::make_dir(const std::string& name) {
+  Aws::S3::Model::PutObjectRequest put_object_request;
+  put_object_request.WithKey(name + "/").WithBucket(bucket_);
+  auto put_object_outcome = client_->PutObject(put_object_request);
+
+  if(!put_object_outcome.IsSuccess()) {
+    LOG(WARNING) << "Save Error: error while making dir: " <<
+        bucket_ << "/" << name << " - " <<
+        put_object_outcome.GetError().GetExceptionName() << " " <<
+        put_object_outcome.GetError().GetMessage();
+    return StoreResult::MkDirFailure;
+  }
   return StoreResult::Success;
 }
 

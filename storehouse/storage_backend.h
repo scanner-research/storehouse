@@ -46,6 +46,8 @@ std::string store_result_to_string(StoreResult result);
 /// FileInfo
 struct FileInfo {
   uint64_t size;
+  bool file_exists;
+  bool file_is_folder;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -109,11 +111,6 @@ class StorageBackend {
    *
    */
   virtual StoreResult make_dir(const std::string& name) = 0;
-
-  /* check_folder_exists
-   *
-   */
-  virtual StoreResult check_file_exists(const std::string& name) = 0;
 
   /* delete_file
    *
