@@ -90,7 +90,8 @@ include_directories(
   "."
   "${GLOG_INCLUDE_DIRS}"
   "${GTEST_INCLUDE_DIRS}"
-  "${PYTHON_INCLUDE_DIRS}")
+  "${PYTHON_INCLUDE_DIRS}"
+  "${Boost_INCLUDE_DIRS}")
 
 set(AWS_MODULES core s3)
 set(AWS_TARGETS)
