@@ -98,7 +98,7 @@ class S3WriteFile : public WriteFile {
  public:
   S3WriteFile(const std::string& name, const std::string& bucket,
                    S3Client* client)
-      : name_(name), bucket_(bucket), client_(client) {
+      : name_(name), bucket_(bucket), client_(client), recently_saved_(false) {
     tmpfilename_ = strdup("/tmp/scannerXXXXXX");
     int temp_fd;
 
@@ -109,12 +109,14 @@ class S3WriteFile : public WriteFile {
   }
 
   ~S3WriteFile() {
-    save();
-    free(tmpfilename_);
-    unlink(tmpfilename_);
+    if (!recently_saved_) {
+      save();
+    }
     if (tfp_ != NULL) {
       std::fclose(tfp_);
     }
+    unlink(tmpfilename_);
+    free(tmpfilename_);
   }
 
   StoreResult append(size_t size, const uint8_t* data) override {
@@ -122,6 +124,7 @@ class S3WriteFile : public WriteFile {
     LOG_IF(FATAL, size_written != size)
       << "S3WriteFile: did not write all " << size << " "
       << "bytes for to tmp file for file " << get_full_path() << ".";
+    recently_saved_ = false;
     return StoreResult::Success;
   }
 
@@ -139,12 +142,13 @@ class S3WriteFile : public WriteFile {
 
     if(!put_object_outcome.IsSuccess()) {
       LOG(WARNING) << "Save Error: error while putting object: " <<
-          get_full_path() << " - " << 
-          put_object_outcome.GetError().GetExceptionName() << " " << 
+          get_full_path() << " - " <<
+          put_object_outcome.GetError().GetExceptionName() << " " <<
           put_object_outcome.GetError().GetMessage();
       return StoreResult::SaveFailure;
     }
-    
+
+    recently_saved_ = true;
     return StoreResult::Success;
   }
 
@@ -156,6 +160,7 @@ class S3WriteFile : public WriteFile {
   S3Client* client_;
   FILE* tfp_;
   char* tmpfilename_;
+  bool recently_saved_;
 
   std::string get_full_path() {
     return bucket_ + "/" + name_;
