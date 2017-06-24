@@ -27,7 +27,7 @@ class S3RandomReadFile : public RandomReadFile {
     size_to_read = std::max(size_to_read, (int64_t)0);
 
     size_read = 0;
-    if (result != StoreResult::Success 
+    if (result != StoreResult::Success
         || (size_to_read == 0 && requested_size == 0)) {
       return result;
     }
@@ -40,7 +40,7 @@ class S3RandomReadFile : public RandomReadFile {
 
     std::stringstream range_request;
     range_request << "bytes=" << offset << "-" << (offset + size_to_read - 1);
-    
+
     object_request.WithBucket(bucket_).WithKey(name_).WithRange(range_request.str());
 
     auto get_object_outcome = client_->GetObject(object_request);
@@ -56,14 +56,14 @@ class S3RandomReadFile : public RandomReadFile {
       return StoreResult::Success;
     } else {
       LOG(WARNING) << "Error opening file: " <<
-          get_full_path() << " - " << 
+          get_full_path() << " - " <<
           get_object_outcome.GetError().GetMessage();
 
       return StoreResult::ReadFailure;
     }
   }
 
-  StoreResult get_size(uint64_t& size) override { 
+  StoreResult get_size(uint64_t& size) override {
     Aws::S3::Model::HeadObjectRequest object_request;
     object_request.WithBucket(bucket_).WithKey(name_);
 
@@ -74,12 +74,12 @@ class S3RandomReadFile : public RandomReadFile {
     } else {
       LOG(WARNING) << "Error getting size - HeadObject error: " <<
           head_object_outcome.GetError().GetExceptionName() << " " <<
-          head_object_outcome.GetError().GetMessage() << 
+          head_object_outcome.GetError().GetMessage() <<
           " for object: " << get_full_path();
       return StoreResult::ReadFailure;
     }
 
-    return StoreResult::Success; 
+    return StoreResult::Success;
   }
 
   const std::string path() override { return name_; }
@@ -98,25 +98,29 @@ class S3WriteFile : public WriteFile {
  public:
   S3WriteFile(const std::string& name, const std::string& bucket,
                    S3Client* client)
-      : name_(name), bucket_(bucket), client_(client), recently_saved_(false) {
+      : name_(name), bucket_(bucket), client_(client) {
     tmpfilename_ = strdup("/tmp/scannerXXXXXX");
     int temp_fd;
 
     temp_fd = mkstemp(tmpfilename_);
+    LOG_IF(FATAL, temp_fd == -1) << "Failed to create temp file for writing";
     tfp_ = fdopen(temp_fd, "wb+");
 
-    LOG_IF(FATAL, tfp_ == NULL) << "Could not create temp file for writing";
+    LOG_IF(FATAL, tfp_ == NULL) << "Failed to open temp file for writing";
+
+    has_changed_ = true;
+
+    LOG(WARNING) << "Make s3 file with " << name;
   }
 
   ~S3WriteFile() {
-    if (!recently_saved_) {
-      save();
-    }
+    save();
+    free(tmpfilename_);
+    int err = unlink(tmpfilename_);
+    LOG_IF(FATAL, err < 0) << "Unlink temp file failed with error: " << strerror(errno);
     if (tfp_ != NULL) {
       std::fclose(tfp_);
     }
-    unlink(tmpfilename_);
-    free(tmpfilename_);
   }
 
   StoreResult append(size_t size, const uint8_t* data) override {
@@ -124,11 +128,13 @@ class S3WriteFile : public WriteFile {
     LOG_IF(FATAL, size_written != size)
       << "S3WriteFile: did not write all " << size << " "
       << "bytes for to tmp file for file " << get_full_path() << ".";
-    recently_saved_ = false;
+    has_changed_ = true;
     return StoreResult::Success;
   }
 
   StoreResult save() override {
+    if (!has_changed_) { return StoreResult::Success; }
+
     std::fflush(tfp_);
 
     auto input_data = Aws::MakeShared<Aws::FStream>("PutObjectInputStream",
@@ -148,7 +154,8 @@ class S3WriteFile : public WriteFile {
       return StoreResult::SaveFailure;
     }
 
-    recently_saved_ = true;
+    has_changed_ = false;
+
     return StoreResult::Success;
   }
 
@@ -160,7 +167,7 @@ class S3WriteFile : public WriteFile {
   S3Client* client_;
   FILE* tfp_;
   char* tmpfilename_;
-  bool recently_saved_;
+  bool has_changed_;
 
   std::string get_full_path() {
     return bucket_ + "/" + name_;
@@ -176,7 +183,7 @@ S3Storage::S3Storage(S3Config config) : bucket_(config.bucket) {
     Aws::InitAPI(sdk_options_);
   }
   num_clients++;
-  
+
   Aws::Client::ClientConfiguration cc;
   cc.scheme = Aws::Http::Scheme::HTTP;
   cc.region = config.endpointRegion;
