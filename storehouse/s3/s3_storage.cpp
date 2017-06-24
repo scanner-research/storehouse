@@ -105,19 +105,16 @@ class S3WriteFile : public WriteFile {
     temp_fd = mkstemp(tmpfilename_);
     LOG_IF(FATAL, temp_fd == -1) << "Failed to create temp file for writing";
     tfp_ = fdopen(temp_fd, "wb+");
-
     LOG_IF(FATAL, tfp_ == NULL) << "Failed to open temp file for writing";
 
     has_changed_ = true;
-
-    LOG(WARNING) << "Make s3 file with " << name;
   }
 
   ~S3WriteFile() {
     save();
-    free(tmpfilename_);
     int err = unlink(tmpfilename_);
-    LOG_IF(FATAL, err < 0) << "Unlink temp file failed with error: " << strerror(errno);
+    LOG_IF(FATAL, err < 0) << "Unlink temp file " << tmpfilename_ << " failed with error: " << strerror(errno);
+    free(tmpfilename_);
     if (tfp_ != NULL) {
       std::fclose(tfp_);
     }
