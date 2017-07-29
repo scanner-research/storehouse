@@ -98,13 +98,12 @@ class S3WriteFile : public WriteFile {
  public:
   S3WriteFile(const std::string& name, const std::string& bucket,
                    S3Client* client)
-      : name_(name), bucket_(bucket), client_(client) {
+      : name_(name), bucket_(bucket), client_(client), tfd_(-1) {
     tmpfilename_ = strdup("/tmp/scannerXXXXXX");
-    int temp_fd;
 
-    temp_fd = mkstemp(tmpfilename_);
-    LOG_IF(FATAL, temp_fd == -1) << "Failed to create temp file for writing";
-    tfp_ = fdopen(temp_fd, "wb+");
+    tfd_ = mkstemp(tmpfilename_);
+    LOG_IF(FATAL, tfd_ == -1) << "Failed to create temp file for writing";
+    tfp_ = fdopen(tfd_, "wb+");
     LOG_IF(FATAL, tfp_ == NULL) << "Failed to open temp file for writing";
 
     has_changed_ = true;
@@ -112,12 +111,17 @@ class S3WriteFile : public WriteFile {
 
   ~S3WriteFile() {
     save();
-    int err = unlink(tmpfilename_);
-    LOG_IF(FATAL, err < 0) << "Unlink temp file " << tmpfilename_ << " failed with error: " << strerror(errno);
-    free(tmpfilename_);
     if (tfp_ != NULL) {
       std::fclose(tfp_);
     }
+
+    if (tfd_ != -1) {
+      close(tfd_);
+    }
+
+    int err = unlink(tmpfilename_);
+    LOG_IF(FATAL, err < 0) << "Unlink temp file " << tmpfilename_ << " failed with error: " << strerror(errno);
+    free(tmpfilename_);
   }
 
   StoreResult append(size_t size, const uint8_t* data) override {
@@ -162,6 +166,7 @@ class S3WriteFile : public WriteFile {
   std::string bucket_;
   std::string name_;
   S3Client* client_;
+  int tfd_;
   FILE* tfp_;
   char* tmpfilename_;
   bool has_changed_;
