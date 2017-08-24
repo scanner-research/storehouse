@@ -5,6 +5,24 @@
 using namespace storehouse;
 namespace bp = boost::python;
 
+namespace {
+class GILRelease {
+ public:
+  inline GILRelease() {
+    PyEval_InitThreads();
+    m_thread_state = PyEval_SaveThread();
+  }
+
+  inline ~GILRelease() {
+    PyEval_RestoreThread(m_thread_state);
+    m_thread_state = NULL;
+  }
+
+ private:
+  PyThreadState* m_thread_state;
+};
+}
+
 void translate_exception(const StoreResult& result) {
   PyErr_SetString(PyExc_UserWarning, store_result_to_string(result).c_str());
 }
@@ -17,18 +35,21 @@ void attempt(StoreResult result) {
 
 RandomReadFile* make_random_read_file(StorageBackend* backend,
                                       const std::string& name) {
+  GILRelease r;
   RandomReadFile* file;
   attempt(backend->make_random_read_file(name, file));
   return file;
 }
 
 WriteFile* make_write_file(StorageBackend* backend, const std::string& name) {
+  GILRelease r;
   WriteFile* file;
   attempt(backend->make_write_file(name, file));
   return file;
 }
 
 std::string r_read(RandomReadFile* file) {
+  GILRelease r;
   std::vector<uint8_t> data;
   uint64_t size;
   attempt(file->get_size(size));
@@ -37,18 +58,24 @@ std::string r_read(RandomReadFile* file) {
 }
 
 uint64_t r_get_size(RandomReadFile* file) {
+  GILRelease r;
   uint64_t size;
   attempt(file->get_size(size));
   return size;
 }
 
 void w_append(WriteFile* file, const std::string& data) {
+  GILRelease r;
   attempt(file->append(data.size(), (const uint8_t*)data.c_str()));
 }
 
-void w_save(WriteFile* file) { attempt(file->save()); }
+void w_save(WriteFile* file) {
+  GILRelease r;
+  attempt(file->save());
+}
 
 std::string read_all_file(StorageBackend* backend, const std::string& name) {
+  GILRelease r;
   RandomReadFile* file = make_random_read_file(backend, name);
   std::string contents = r_read(file);
   delete file;
@@ -57,6 +84,7 @@ std::string read_all_file(StorageBackend* backend, const std::string& name) {
 
 void write_all_file(StorageBackend* backend, const std::string& name,
                     const std::string& data) {
+  GILRelease r;
   WriteFile* file = make_write_file(backend, name);
   w_append(file, data);
   w_save(file);
@@ -64,20 +92,24 @@ void write_all_file(StorageBackend* backend, const std::string& name,
 }
 
 void make_dir(StorageBackend* backend, const std::string& name) {
+  GILRelease r;
   attempt(backend->make_dir(name));
 }
 
 FileInfo get_file_info(StorageBackend* backend, const std::string& name) {
+  GILRelease r;
   FileInfo file_info;
   backend->get_file_info(name, file_info);
   return file_info;
 }
 
 void delete_file(StorageBackend* backend, const std::string& name) {
+  GILRelease r;
   attempt(backend->delete_file(name));
 }
 
 void delete_dir(StorageBackend* backend, const std::string& name) {
+  GILRelease r;
   attempt(backend->delete_dir(name));
 }
 
