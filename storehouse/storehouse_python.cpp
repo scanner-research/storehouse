@@ -76,7 +76,8 @@ void w_save(WriteFile* file) {
 
 std::string read_all_file(StorageBackend* backend, const std::string& name) {
   GILRelease r;
-  RandomReadFile* file = make_random_read_file(backend, name);
+  RandomReadFile* file;
+  attempt(backend->make_random_read_file(name, file));
   std::string contents = r_read(file);
   delete file;
   return contents;
@@ -85,7 +86,8 @@ std::string read_all_file(StorageBackend* backend, const std::string& name) {
 void write_all_file(StorageBackend* backend, const std::string& name,
                     const std::string& data) {
   GILRelease r;
-  WriteFile* file = make_write_file(backend, name);
+  WriteFile* file;
+  attempt(backend->make_write_file(name, file));
   w_append(file, data);
   w_save(file);
   delete file;
