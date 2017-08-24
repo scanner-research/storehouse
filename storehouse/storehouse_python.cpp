@@ -49,12 +49,16 @@ WriteFile* make_write_file(StorageBackend* backend, const std::string& name) {
 }
 
 std::string r_read(RandomReadFile* file) {
-  GILRelease r;
   std::vector<uint8_t> data;
   uint64_t size;
   attempt(file->get_size(size));
   attempt(file->read(0, size, data));
   return std::string(data.begin(), data.end());
+}
+
+std::string wrapper_r_read(RandomReadFile* file) {
+  GILRelease r;
+  return r_read(file)
 }
 
 uint64_t r_get_size(RandomReadFile* file) {
@@ -154,7 +158,7 @@ BOOST_PYTHON_MODULE(libstorehouse) {
     .def("delete_dir", &delete_dir);
 
   class_<RandomReadFile, boost::noncopyable>("RandomReadFile", no_init)
-    .def("read", &r_read)
+    .def("read", &wrapper_r_read)
     .def("get_size", &r_get_size);
 
   class_<WriteFile, boost::noncopyable>("WriteFile", no_init)
