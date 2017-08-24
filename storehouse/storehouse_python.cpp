@@ -58,7 +58,7 @@ std::string r_read(RandomReadFile* file) {
 
 std::string wrapper_r_read(RandomReadFile* file) {
   GILRelease r;
-  return r_read(file)
+  return r_read(file);
 }
 
 uint64_t r_get_size(RandomReadFile* file) {
@@ -92,8 +92,8 @@ void write_all_file(StorageBackend* backend, const std::string& name,
   GILRelease r;
   WriteFile* file;
   attempt(backend->make_write_file(name, file));
-  w_append(file, data);
-  w_save(file);
+  attempt(file->append(data.size(), (const uint8_t*)data.c_str()));
+  attempt(file->save());
   delete file;
 }
 
