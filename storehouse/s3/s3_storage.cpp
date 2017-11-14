@@ -187,7 +187,7 @@ S3Storage::S3Storage(S3Config config) : bucket_(config.bucket) {
   num_clients++;
 
   Aws::Client::ClientConfiguration cc;
-  cc.scheme = Aws::Http::Scheme::HTTP;
+  cc.scheme = Aws::Http::Scheme::HTTPS;
   cc.region = config.endpointRegion;
   cc.endpointOverride = config.endpointOverride;
 
