@@ -37,6 +37,9 @@ StorageConfig* StorageConfig::make_posix_config() { return new PosixConfig; }
 StorageConfig* StorageConfig::make_s3_config(const std::string& bucket) {
   S3Config* config = new S3Config;
   config->bucket = bucket;
+
+  // TODO: read region from config file to generalize to any region.
+  // Need to change the parameter for this function
   config->endpointOverride = "s3.dualstack.us-west-2.amazonaws.com";
   config->endpointRegion = Aws::Region::US_WEST_2;
   return config;
