@@ -49,6 +49,9 @@ class RandomReadFile(object):
         else:
             raise ValueError
 
+    def size(self):
+        return self._size
+
     def tell(self):
         return self._offset
 
