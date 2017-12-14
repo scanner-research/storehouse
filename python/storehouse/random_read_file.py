@@ -1,4 +1,4 @@
-import libstorehouse
+from __future__ import absolute_import
 import os
 
 class RandomReadFile(object):
