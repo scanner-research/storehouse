@@ -61,6 +61,14 @@ std::string wrapper_r_read(RandomReadFile* file) {
   return r_read(file);
 }
 
+std::string wrapper_r_read_offset(RandomReadFile* file, uint64_t offset,
+                                  uint64_t size) {
+  GILRelease r;
+  std::vector<uint8_t> data;
+  attempt(file->read(offset, size, data));
+  return std::string(data.begin(), data.end());
+}
+
 uint64_t r_get_size(RandomReadFile* file) {
   GILRelease r;
   uint64_t size;
@@ -157,8 +165,9 @@ BOOST_PYTHON_MODULE(libstorehouse) {
     .def("delete_file", &delete_file)
     .def("delete_dir", &delete_dir);
 
-  class_<RandomReadFile, boost::noncopyable>("RandomReadFile", no_init)
+  class_<RandomReadFile, boost::noncopyable>("RandomReadFile_internal", no_init)
     .def("read", &wrapper_r_read)
+    .def("read_offset", &wrapper_r_read_offset)
     .def("get_size", &r_get_size);
 
   class_<WriteFile, boost::noncopyable>("WriteFile", no_init)
