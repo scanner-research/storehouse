@@ -190,6 +190,8 @@ S3Storage::S3Storage(S3Config config) : bucket_(config.bucket) {
   cc.scheme = Aws::Http::Scheme::HTTPS;
   cc.region = config.endpointRegion;
   cc.endpointOverride = config.endpointOverride;
+  cc.connectTimeoutMs = 1000 * 60 * 10;
+  cc.requestTimeoutMs = 1000 * 60 * 10;
 
   client_ = new S3Client(cc);
 }
