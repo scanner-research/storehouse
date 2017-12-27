@@ -8,6 +8,7 @@
 #include <aws/core/Aws.h>
 #include <fstream>
 #include <sstream>
+#include <fcntl.h>
 
 namespace storehouse {
 
@@ -55,9 +56,10 @@ class S3RandomReadFile : public RandomReadFile {
       }
       return StoreResult::Success;
     } else {
+      auto error = get_object_outcome.GetError();
       LOG(WARNING) << "Error opening file: " <<
-          get_full_path() << " - " <<
-          get_object_outcome.GetError().GetMessage();
+        get_full_path() << " - " <<
+        error.GetMessage();
 
       return StoreResult::ReadFailure;
     }
@@ -102,7 +104,8 @@ class S3WriteFile : public WriteFile {
     tmpfilename_ = strdup("/tmp/scannerXXXXXX");
 
     tfd_ = mkstemp(tmpfilename_);
-    LOG_IF(FATAL, tfd_ == -1) << "Failed to create temp file for writing";
+    LOG_IF(FATAL, tfd_ == -1 || fcntl(tfd_, F_GETFD) == -1)
+      << "Failed to create temp file for writing";
     tfp_ = fdopen(tfd_, "wb+");
     LOG_IF(FATAL, tfp_ == NULL) << "Failed to open temp file for writing";
 
@@ -111,24 +114,29 @@ class S3WriteFile : public WriteFile {
 
   ~S3WriteFile() {
     save();
-    if (tfp_ != NULL) {
-      std::fclose(tfp_);
-    }
 
-    if (tfd_ != -1) {
-      close(tfd_);
-    }
+    int err;
+    err = std::fclose(tfp_);
+    LOG_IF(FATAL, err < 0)
+      << "fclose temp file " << tmpfilename_ << " "
+      << "failed with error: " << strerror(errno);
 
-    int err = unlink(tmpfilename_);
-    LOG_IF(FATAL, err < 0) << "Unlink temp file " << tmpfilename_ << " failed with error: " << strerror(errno);
+    err = unlink(tmpfilename_);
+    LOG_IF(FATAL, err < 0)
+      << "unlink temp file " << tmpfilename_ << " "
+      << "failed with error: " << strerror(errno);
     free(tmpfilename_);
   }
 
   StoreResult append(size_t size, const uint8_t* data) override {
+    LOG_IF(FATAL, tfp_ == NULL) << "assertion failure: null file pointer";
+    LOG_IF(FATAL, tfd_ == -1 || fcntl(tfd_, F_GETFD) == -1)
+      << "S3WriteFile: closed file descriptor for " << get_full_path();
     size_t size_written = fwrite(data, sizeof(uint8_t), size, tfp_);
     LOG_IF(FATAL, size_written != size)
       << "S3WriteFile: did not write all " << size << " "
-      << "bytes for to tmp file for file " << get_full_path() << ".";
+      << "bytes to tmp file for file " << get_full_path() << " "
+      << "with error: " << strerror(errno);
     has_changed_ = true;
     return StoreResult::Success;
   }
@@ -148,10 +156,11 @@ class S3WriteFile : public WriteFile {
     auto put_object_outcome = client_->PutObject(put_object_request);
 
     if(!put_object_outcome.IsSuccess()) {
+      auto error = put_object_outcome.GetError();
       LOG(WARNING) << "Save Error: error while putting object: " <<
-          get_full_path() << " - " <<
-          put_object_outcome.GetError().GetExceptionName() << " " <<
-          put_object_outcome.GetError().GetMessage();
+        get_full_path() << " - " <<
+        error.GetExceptionName() << " " <<
+        error.GetMessage();
       return StoreResult::SaveFailure;
     }
 
