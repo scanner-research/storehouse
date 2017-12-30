@@ -143,18 +143,17 @@ StoreResult make_unique_write_file(StorageBackend* storage,
   return result;
 }
 
-std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos) {
+std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos, size_t read_size) {
   // Load the entire input
   std::vector<uint8_t> bytes;
   {
-    const size_t READ_SIZE = 1024 * 1024;
     while (true) {
       size_t prev_size = bytes.size();
-      bytes.resize(bytes.size() + READ_SIZE);
+      bytes.resize(bytes.size() + read_size);
       size_t size_read;
       StoreResult result;
       EXP_BACKOFF(
-        file->read(pos, READ_SIZE, bytes.data() + prev_size, size_read),
+        file->read(pos, read_size, bytes.data() + prev_size, size_read),
         result);
       assert(result == StoreResult::Success ||
              result == StoreResult::EndOfFile);

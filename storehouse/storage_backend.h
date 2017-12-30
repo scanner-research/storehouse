@@ -134,7 +134,7 @@ StoreResult make_unique_write_file(StorageBackend* storage,
                                    const std::string& name,
                                    std::unique_ptr<WriteFile>& file);
 
-std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos);
+std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos, size_t read_size=1048576);
 
 void exit_on_error(StoreResult result);
 
