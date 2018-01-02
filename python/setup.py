@@ -14,7 +14,7 @@ shutil.copy(SO_PATH, os.path.join(PIP_DIR, 'storehouse'))
 
 setup(
     name='storehouse',
-    version='0.4.0',
+    version='0.4.1',
     url='https://github.com/scanner-research/storehouse',
     author='Alex Poms and Will Crichton',
     author_email='wcrichto@cs.stanford.edu',

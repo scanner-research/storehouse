@@ -61,7 +61,7 @@ class S3RandomReadFile : public RandomReadFile {
         get_full_path() << " - " <<
         error.GetMessage();
 
-      return StoreResult::ReadFailure;
+      return StoreResult::TransientFailure;
     }
   }
 
@@ -78,7 +78,7 @@ class S3RandomReadFile : public RandomReadFile {
           head_object_outcome.GetError().GetExceptionName() << " " <<
           head_object_outcome.GetError().GetMessage() <<
           " for object: " << get_full_path();
-      return StoreResult::ReadFailure;
+      return StoreResult::TransientFailure;
     }
 
     return StoreResult::Success;
@@ -161,7 +161,7 @@ class S3WriteFile : public WriteFile {
         get_full_path() << " - " <<
         error.GetExceptionName() << " " <<
         error.GetMessage();
-      return StoreResult::SaveFailure;
+      return StoreResult::TransientFailure;
     }
 
     has_changed_ = false;
@@ -249,7 +249,7 @@ StoreResult S3Storage::make_dir(const std::string& name) {
         bucket_ << "/" << name << " - " <<
         put_object_outcome.GetError().GetExceptionName() << " " <<
         put_object_outcome.GetError().GetMessage();
-    return StoreResult::MkDirFailure;
+    return StoreResult::TransientFailure;
   }
   return StoreResult::Success;
 }
