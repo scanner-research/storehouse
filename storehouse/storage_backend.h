@@ -151,6 +151,7 @@ void exit_on_error(StoreResult result);
           sleep_debt__ *= 2;                                            \
         } else {                                                        \
           LOG(WARNING) << "EXP_BACKOFF: reached max backoff.";          \
+          status__ = result__;                                          \
           break;
         }                                                               \
         LOG(WARNING) << "EXP_BACKOFF: transient failure, sleeping for " \
