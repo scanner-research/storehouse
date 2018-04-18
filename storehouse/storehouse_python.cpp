@@ -54,25 +54,25 @@ WriteFile* make_write_file(StorageBackend* backend, const std::string& name) {
   return file;
 }
 
-std::string r_read(RandomReadFile* file) {
+py::bytes r_read(RandomReadFile* file) {
   std::vector<uint8_t> data;
   uint64_t size;
   attempt(file->get_size(size));
   attempt(file->read(0, size, data));
-  return std::string(data.begin(), data.end());
+  return py::bytes(std::string(data.begin(), data.end()));
 }
 
-std::string wrapper_r_read(RandomReadFile* file) {
+py::bytes wrapper_r_read(RandomReadFile* file) {
   GILRelease r;
   return r_read(file);
 }
 
-std::string wrapper_r_read_offset(RandomReadFile* file, uint64_t offset,
+py::bytes wrapper_r_read_offset(RandomReadFile* file, uint64_t offset,
                                   uint64_t size) {
   GILRelease r;
   std::vector<uint8_t> data;
   attempt(file->read(offset, size, data));
-  return std::string(data.begin(), data.end());
+  return py::bytes(std::string(data.begin(), data.end()));
 }
 
 uint64_t r_get_size(RandomReadFile* file) {
@@ -92,13 +92,13 @@ void w_save(WriteFile* file) {
   attempt(file->save());
 }
 
-std::string read_all_file(StorageBackend* backend, const std::string& name) {
+py::bytes read_all_file(StorageBackend* backend, const std::string& name) {
   GILRelease r;
   RandomReadFile* file;
   attempt(backend->make_random_read_file(name, file));
   std::string contents = r_read(file);
   delete file;
-  return contents;
+  return py::bytes(contents);
 }
 
 void write_all_file(StorageBackend* backend, const std::string& name,
