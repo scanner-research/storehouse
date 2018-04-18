@@ -64,11 +64,11 @@ if(NOT APPLE AND UNIX)
 endif()
 
 ###### PROJECT LIBRARIES #######
-find_package(Boost REQUIRED COMPONENTS thread program_options python)
+set(PYBIND11_PYTHON_VERSION 3.5)
+find_package(pybind11 REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
 find_package(CURL REQUIRED)
-find_package(PythonLibs 2.7 EXACT REQUIRED)
 
 set(GTEST_INCLUDE_DIRS
   "${GLOBAL_OUTPUT_PATH}/googletest/include")
@@ -83,15 +83,14 @@ set(STOREHOUSE_LIBRARIES
   "${CURL_LIBRARIES}"
   "${OPENSSL_LIBRARIES}"
   "${STOREHOUSE_LIBRARIES}"
-  "${Boost_LIBRARIES}"
-  "${PythonLibs_LIBRARIES}")
+  "${PYTHON_LIBRARIES}")
 
 include_directories(
   "."
   "${GLOG_INCLUDE_DIRS}"
   "${GTEST_INCLUDE_DIRS}"
   "${PYTHON_INCLUDE_DIRS}"
-  "${Boost_INCLUDE_DIRS}")
+  "${pybind11_INCLUDE_DIR}")
 
 set(AWS_MODULES core s3)
 set(AWS_TARGETS)

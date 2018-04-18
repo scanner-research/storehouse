@@ -1,9 +1,9 @@
-#include <boost/python.hpp>
+#include <pybind11/pybind11.h>
 #include "storehouse/storage_backend.h"
 #include "storehouse/storage_config.h"
 
 using namespace storehouse;
-namespace bp = boost::python;
+namespace py = pybind11;
 
 namespace {
 class GILRelease {
@@ -23,13 +23,19 @@ class GILRelease {
 };
 }
 
-void translate_exception(const StoreResult& result) {
-  PyErr_SetString(PyExc_UserWarning, store_result_to_string(result).c_str());
-}
+class StorehouseException : public std::exception {
+public:
+  StorehouseException(StoreResult result) : message(store_result_to_string(result)) {}
+  virtual const char * what() const noexcept override {
+    return message.c_str();
+  }
+private:
+  std::string message;
+};
 
 void attempt(StoreResult result) {
   if (result != StoreResult::Success) {
-    throw result;
+    throw StorehouseException(result);
   }
 }
 
@@ -127,37 +133,25 @@ void delete_dir(StorageBackend* backend, const std::string& name) {
   attempt(backend->delete_dir(name));
 }
 
-BOOST_PYTHON_MODULE(libstorehouse) {
-  using namespace bp;
-  register_exception_translator<StoreResult>(translate_exception);
-  
-  StoreResult (RandomReadFile::*rrf_read)(
-    uint64_t, size_t, std::vector<uint8_t>&) = &RandomReadFile::read;
-  
-  class_<StorageConfig>("StorageConfig", no_init)
-    .def("make_posix_config", &StorageConfig::make_posix_config,
-         return_value_policy<manage_new_object>())
-    .staticmethod("make_posix_config")
-    .def("make_s3_config", &StorageConfig::make_s3_config,
-         return_value_policy<manage_new_object>())
-    .staticmethod("make_s3_config")
-    .def("make_gcs_config", &StorageConfig::make_gcs_config,
-         return_value_policy<manage_new_object>())
-    .staticmethod("make_gcs_config");
+PYBIND11_MODULE(libstorehouse, m) {
+  m.doc() = "Storehouse C library";
 
-  class_<FileInfo>("FileInfo")
-    .add_property("size", &FileInfo::size)
-    .add_property("file_exists", &FileInfo::file_exists)
-    .add_property("file_is_folder", &FileInfo::file_is_folder);
+  py::register_exception<StorehouseException>(m, "StorehouseException");
 
-  class_<StorageBackend, boost::noncopyable>("StorageBackend", no_init)
-    .def("make_from_config", &StorageBackend::make_from_config,
-         return_value_policy<manage_new_object>())
-    .staticmethod("make_from_config")
-    .def("make_random_read_file", &make_random_read_file,
-         return_value_policy<manage_new_object>())
-    .def("make_write_file", &make_write_file,
-         return_value_policy<manage_new_object>())
+  py::class_<StorageConfig>(m, "StorageConfig")
+    .def_static("make_posix_config", &StorageConfig::make_posix_config)
+    .def_static("make_s3_config", &StorageConfig::make_s3_config)
+    .def_static("make_gcs_config", &StorageConfig::make_gcs_config);
+
+  py::class_<FileInfo>(m, "FileInfo")
+    .def_readonly("size", &FileInfo::size)
+    .def_readonly("file_exists", &FileInfo::file_exists)
+    .def_readonly("file_is_folder", &FileInfo::file_is_folder);
+
+  py::class_<StorageBackend>(m, "StorageBackend")
+    .def_static("make_from_config", &StorageBackend::make_from_config)
+    .def("make_random_read_file", &make_random_read_file)
+    .def("make_write_file", &make_write_file)
     .def("get_file_info", &get_file_info)
     .def("read", &read_all_file)
     .def("write", &write_all_file)
@@ -165,14 +159,12 @@ BOOST_PYTHON_MODULE(libstorehouse) {
     .def("delete_file", &delete_file)
     .def("delete_dir", &delete_dir);
 
-  class_<RandomReadFile, boost::noncopyable>("RandomReadFile_internal", no_init)
+  py::class_<RandomReadFile>(m, "RandomReadFile")
     .def("read", &wrapper_r_read)
     .def("read_offset", &wrapper_r_read_offset)
     .def("get_size", &r_get_size);
 
-  class_<WriteFile, boost::noncopyable>("WriteFile", no_init)
+  py::class_<WriteFile>(m, "WriteFile")
     .def("append", &w_append)
     .def("save", &w_save);
-
-  enum_<StoreResult>("StoreResult");
 }
