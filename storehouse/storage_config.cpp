@@ -51,4 +51,34 @@ StorageConfig* StorageConfig::make_gcs_config(const std::string& bucket) {
 
   	return config;
 }
+
+StorageConfig* StorageConfig::make_config(const std::string& type, const std::map<std::string, std::string>& args) {
+  auto check_key = [&](std::string key) {
+    if (args.count(key) == 0) {
+      LOG(WARNING) << "StorageConfig " << type << " is missing required argument " << key;
+      return false;
+    }
+    return true;
+  };
+
+  StorageConfig* sc_config = nullptr;
+  if (type == "posix") {
+    sc_config = StorageConfig::make_posix_config();
+  } else if (type == "gcs") {
+    if (!check_key("bucket")) {
+      return sc_config;
+    }
+    sc_config = StorageConfig::make_gcs_config(args.at("bucket"));
+  } else if (type == "s3") {
+    if (!check_key("bucket") || !check_key("region") || !check_key("endpoint")) {
+      return sc_config;
+    }
+    sc_config = StorageConfig::make_s3_config(args.at("bucket"), args.at("region"),
+                                              args.at("endpoint"));
+  } else {
+    LOG(WARNING) << "Not a valid storage config type";
+  }
+  return sc_config;
+}
+
 }
