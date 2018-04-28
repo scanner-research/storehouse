@@ -16,7 +16,9 @@ SO_PATH = os.path.join(BUILD_DIR, 'libstorehouse' + EXT)
 
 shutil.rmtree(PIP_DIR, ignore_errors=True)
 shutil.copytree(SCRIPT_DIR, PIP_DIR)
-shutil.copy(SO_PATH, os.path.join(PIP_DIR, 'storehouse'))
+shutil.copyfile(
+    SO_PATH,
+    os.path.join(PIP_DIR, 'storehouse', 'libstorehouse.so'))
 
 setup(
     name='storehouse',
@@ -29,7 +31,7 @@ setup(
     packages=['storehouse'],
     package_data={
         'storehouse': [
-            '*' + EXT,
+            '*.so',
         ]
     },
 
