@@ -12,7 +12,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 STOREHOUSE_DIR = '.'
 BUILD_DIR = os.path.join(STOREHOUSE_DIR, 'build')
 PIP_DIR = os.path.join(BUILD_DIR, 'pip')
-SO_PATH = os.path.join(BUILD_DIR, 'libstorehouse.so')
+SO_PATH = os.path.join(BUILD_DIR, 'libstorehouse' + EXT)
 
 shutil.rmtree(PIP_DIR, ignore_errors=True)
 shutil.copytree(SCRIPT_DIR, PIP_DIR)
