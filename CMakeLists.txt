@@ -119,28 +119,25 @@ if(BUILD_STATIC)
     COMMAND ld -r *.o -o ${DEPS}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   add_library(storehouse STATIC ${DEPS} ${SOURCE_FILES})
+  target_link_libraries(storehouse ${STOREHOUSE_LIBRARIES})
 else()
   add_library(storehouse SHARED ${SOURCE_FILES})
+  target_link_libraries(storehouse ${STOREHOUSE_LIBRARIES} ${AWS_TARGETS})
 endif()
 
-target_link_libraries(storehouse ${STOREHOUSE_LIBRARIES} ${AWS_TARGETS})
+get_target_property(AWS_CORE_INC aws-cpp-sdk-core INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(AWS_S3_INC aws-cpp-sdk-s3 INTERFACE_INCLUDE_DIRECTORIES)
+message(${AWS_S3_INC})
+include_directories(${AWS_CORE_INC} ${AWS_S3_INC})
 
 set(PUBLIC_HEADER_FILES
   storehouse/storage_backend.h
   storehouse/storage_config.h)
 
-if(BUILD_STATIC)
-  set(STOREHOUSE_LIBRARY "libstorehouse.a")
-else()
-  set(STOREHOUSE_LIBRARY "libstorehouse.so")
-endif()
-
 install(TARGETS storehouse
   EXPORT StorehouseTarget
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
-
-set(STOREHOUSE_LIBRARY "${CMAKE_INSTALL_PREFIX}/lib/${STOREHOUSE_LIBRARY}")
 
 configure_file(cmake/StorehouseConfig.cmake.in
   "${PROJECT_BINARY_DIR}/cmake/StorehouseConfig.cmake" @ONLY)

@@ -1,6 +1,12 @@
 from setuptools import setup
 import os
 import shutil
+from sys import platform
+
+if platform == 'linux' or platform == 'linux2':
+    EXT = '.so'
+else:
+    EXT = '.dylib'
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 STOREHOUSE_DIR = '.'
@@ -23,7 +29,7 @@ setup(
     packages=['storehouse'],
     package_data={
         'storehouse': [
-            '*.so',
+            '*' + EXT,
         ]
     },
 
