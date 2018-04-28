@@ -119,10 +119,11 @@ if(BUILD_STATIC)
     COMMAND ld -r *.o -o ${DEPS}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   add_library(storehouse STATIC ${DEPS} ${SOURCE_FILES})
-  target_link_libraries(storehouse ${STOREHOUSE_LIBRARIES})
+  target_link_libraries(storehouse PUBLIC ${STOREHOUSE_LIBRARIES})
 else()
   add_library(storehouse SHARED ${SOURCE_FILES})
-  target_link_libraries(storehouse ${STOREHOUSE_LIBRARIES} ${AWS_TARGETS})
+  target_link_libraries(storehouse PUBLIC ${STOREHOUSE_LIBRARIES})
+  target_link_libraries(storehouse PRIVATE ${AWS_TARGETS})
 endif()
 
 get_target_property(AWS_CORE_INC aws-cpp-sdk-core INTERFACE_INCLUDE_DIRECTORIES)
