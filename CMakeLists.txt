@@ -64,7 +64,7 @@ if(NOT APPLE AND UNIX)
 endif()
 
 ###### PROJECT LIBRARIES #######
-set(PYBIND11_PYTHON_VERSION 3.5)
+set(PYBIND11_PYTHON_VERSION 3)
 find_package(pybind11 REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(Glog REQUIRED)
