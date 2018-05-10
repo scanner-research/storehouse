@@ -137,7 +137,7 @@ StoreResult make_unique_write_file(StorageBackend* storage,
 std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos,
                                       size_t read_size = 1048576);
 
-void exit_on_error(StoreResult result);
+void exit_on_error(StoreResult result, const std::string& exit_msg = "");
 
 #define EXP_BACKOFF(expression__, status__)                             \
   do {                                                                  \
@@ -164,11 +164,11 @@ void exit_on_error(StoreResult result);
     }                                                                   \
   } while (0);
 
-#define BACKOFF_FAIL(expression__)        \
-  do {                                    \
-    storehouse::StoreResult result___;    \
-    EXP_BACKOFF(expression__, result___); \
-    storehouse::exit_on_error(result___); \
+#define BACKOFF_FAIL(expression__, failure_msg__)        \
+  do {                                                      \
+    storehouse::StoreResult result___;                      \
+    EXP_BACKOFF(expression__, result___);                   \
+    storehouse::exit_on_error(result___, failure_reason__); \
   } while (0);
 
 #define RETURN_ON_ERROR(expression)                      \

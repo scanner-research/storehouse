@@ -167,11 +167,11 @@ std::vector<uint8_t> read_entire_file(RandomReadFile* file, uint64_t& pos, size_
   return bytes;
 }
 
-void exit_on_error(StoreResult result) {
+void exit_on_error(StoreResult result, const std::string& exit_msg) {
   if (result == StoreResult::Success) return;
 
   LOG(FATAL) << "Exiting due to failed operation result: "
-             << store_result_to_string(result) << ".";
+             << store_result_to_string(result) << ", " << exit_msg;
   std::exit(EXIT_FAILURE);
 }
 }
