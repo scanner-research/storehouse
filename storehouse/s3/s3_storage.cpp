@@ -4,6 +4,8 @@
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/s3/model/ListObjectsV2Request.h>
+#include <aws/s3/model/DeleteObjectsRequest.h>
 #include <aws/core/client/DefaultRetryStrategy.h>
 #include <aws/core/Aws.h>
 #include <fstream>
@@ -236,7 +238,7 @@ StoreResult S3Storage::get_file_info(const std::string& name,
   file_info.file_is_folder = (name[name.length()-1] == '/');
   auto result = s3read_file.get_size(file_info.size);
   if (result == StoreResult::Success) {
-  	file_info.file_exists = true;
+    file_info.file_exists = true;
   }
   return result;
 }
@@ -274,10 +276,77 @@ StoreResult S3Storage::make_dir(const std::string& name) {
 }
 
 StoreResult S3Storage::delete_file(const std::string& name) {
-  return StoreResult::Success;
+  return delete_dir(name, true);
 }
 
 StoreResult S3Storage::delete_dir(const std::string& name, bool recursive) {
+  std::vector<std::string> object_paths_to_delete;
+  // List all objects after prefix
+  std::string continuation_token = "";
+  while (true) {
+    Aws::S3::Model::ListObjectsV2Request list_request;
+    list_request.SetBucket(bucket_);
+    list_request.SetPrefix(name + "/");
+    if (continuation_token != "") {
+      list_request.SetContinuationToken(continuation_token);
+    }
+    auto list_objects_outcome = client_->ListObjectsV2(list_request);
+    if (list_objects_outcome.IsSuccess()) {
+      auto result = list_objects_outcome.GetResult();
+      // Get list of paths and append
+      for (const auto& obj : result.GetContents()) {
+        object_paths_to_delete.push_back(obj.GetKey());
+      }
+      // Are there more objects to fetch?
+      if (!result.GetIsTruncated()) {
+        // No, so finish the loop
+        break;
+      } else {
+        continuation_token = result.GetContinuationToken();
+      }
+    } else {
+      if (list_objects_outcome.GetError().ShouldRetry()) {
+        return StoreResult::TransientFailure;
+      } else {
+        auto error = list_objects_outcome.GetError();
+        LOG(WARNING) << "Error deleting dir: " <<
+            bucket_ + "/" + name << " - " <<
+            error.GetMessage();
+        return StoreResult::RemoveFailure;
+      }
+    }
+  }
+
+  const int MAX_DELETE_SIZE = 1000;
+  // Delete all objects using multi object delete
+  for (int i = 0; i < object_paths_to_delete.size(); i += MAX_DELETE_SIZE) {
+    Aws::S3::Model::DeleteObjectsRequest delete_request;
+    delete_request.SetBucket(bucket_);
+
+    Aws::S3::Model::Delete delete_list;
+    int end = std::min(i + MAX_DELETE_SIZE, (int)object_paths_to_delete.size());
+    for (int j = i; j < end; j++) {
+      delete_list.AddObjects(
+        Aws::S3::Model::ObjectIdentifier().WithKey(object_paths_to_delete[j]));
+    }
+    delete_request.SetDelete(delete_list);
+
+    auto delete_objects_outcome = client_->DeleteObjects(delete_request);
+
+    if (!delete_objects_outcome.IsSuccess()) {
+      if (delete_objects_outcome.GetError().ShouldRetry()) {
+        return StoreResult::TransientFailure;
+      } else {
+        auto error = delete_objects_outcome.GetError();
+        LOG(WARNING) << "Error deleting dir: " <<
+            bucket_ + "/" + name << " - " <<
+            error.GetMessage();
+        return StoreResult::RemoveFailure;
+      }
+    }
+  }
+
   return StoreResult::Success;
 }
+
 }

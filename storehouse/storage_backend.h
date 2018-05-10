@@ -168,7 +168,7 @@ void exit_on_error(StoreResult result, const std::string& exit_msg = "");
   do {                                                      \
     storehouse::StoreResult result___;                      \
     EXP_BACKOFF(expression__, result___);                   \
-    storehouse::exit_on_error(result___, failure_reason__); \
+    storehouse::exit_on_error(result___, failure_msg__); \
   } while (0);
 
 #define RETURN_ON_ERROR(expression)                      \
