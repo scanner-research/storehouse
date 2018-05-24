@@ -22,7 +22,7 @@ shutil.copyfile(
 
 setup(
     name='storehouse',
-    version='0.4.1',
+    version='0.4.2',
     url='https://github.com/scanner-research/storehouse',
     author='Alex Poms and Will Crichton',
     author_email='wcrichto@cs.stanford.edu',

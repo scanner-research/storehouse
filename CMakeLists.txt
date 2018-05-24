@@ -143,10 +143,10 @@ install(TARGETS storehouse
 configure_file(cmake/StorehouseConfig.cmake.in
   "${PROJECT_BINARY_DIR}/cmake/StorehouseConfig.cmake" @ONLY)
 
-install(FILES "${PROJECT_BINARY_DIR}/cmake/StorehouseConfig.cmake"
-  DESTINATION cmake)
+install(FILES "${PROJECT_BINARY_DIR}/share/cmake/StorehouseConfig.cmake"
+  DESTINATION share/storehouse)
 
 install_headers_with_directory(PUBLIC_HEADER_FILES)
 
 install(EXPORT StorehouseTarget
-  DESTINATION cmake)
+  DESTINATION share/storehouse)
