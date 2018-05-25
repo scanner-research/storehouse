@@ -133,7 +133,7 @@ void delete_dir(StorageBackend* backend, const std::string& name) {
   attempt(backend->delete_dir(name));
 }
 
-PYBIND11_MODULE(libstorehouse, m) {
+PYBIND11_MODULE(storehouse_python, m) {
   m.doc() = "Storehouse C library";
 
   py::register_exception<StorehouseException>(m, "StorehouseException");

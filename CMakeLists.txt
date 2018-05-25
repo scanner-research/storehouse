@@ -105,7 +105,6 @@ add_subdirectory(storehouse)
 set(SOURCE_FILES
   storehouse/storage_backend.cpp
   storehouse/storage_config.cpp
-  storehouse/storehouse_python.cpp
   storehouse/util.cpp
   $<TARGET_OBJECTS:posix_storage_lib>
   $<TARGET_OBJECTS:s3_storage_lib>)
