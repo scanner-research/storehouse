@@ -13,9 +13,12 @@ ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
 BUILD_DIR = os.path.join(ROOT_DIR, 'build')
 PIP_DIR = os.path.join(BUILD_DIR, 'pip')
 SO_PATH = os.path.join(BUILD_DIR, 'libstorehouse' + EXT)
+DEST_PATH = os.path.abspath('{p:s}/lib/libstorehouse{e:s}'.format(p=PIP_DIR,
+                                                                  e=EXT))
+#shutil.copyfile(SO_PATH, DEST_PATH)
 
 module1 = Extension(
-    'storehouse_python',
+    'storehouse._python',
     include_dirs = [ROOT_DIR, os.path.join(ROOT_DIR, 'build')],
     libraries = ['storehouse'],
     library_dirs = [os.path.join(ROOT_DIR, 'build')],
