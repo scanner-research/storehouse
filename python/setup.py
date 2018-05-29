@@ -27,7 +27,7 @@ module1 = Extension(
 
 setup(
     name='storehouse',
-    version='0.5.0',
+    version='0.6.0',
     url='https://github.com/scanner-research/storehouse',
     author='Alex Poms and Will Crichton',
     author_email='wcrichto@cs.stanford.edu',
