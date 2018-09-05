@@ -10,7 +10,7 @@ set(THIRDPARTY_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 string(REPLACE ";" ";" AWS_MODULES_STR "${AWS_MODULES}")
 ExternalProject_Add(AWS
   GIT_REPOSITORY "https://github.com/aws/aws-sdk-cpp"
-  GIT_TAG "1.0.71"
+  GIT_TAG "1.6.4"
 
   UPDATE_COMMAND ""
 
