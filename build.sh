@@ -17,8 +17,9 @@ fi
 pushd build
 if make -j$cores; then
     popd
+    pushd python
     if rm -rf dist && \
-        python3 python/setup.py bdist_wheel;
+        python3 setup.py bdist_wheel;
     then
         cwd=$(pwd)
         # cd to /tmp to avoid name clashes with Python module name and any
@@ -27,7 +28,10 @@ if make -j$cores; then
         (yes | pip3 uninstall $PKG)
         (yes | pip3 install $cwd/dist/*)
         popd
+    else
+        exit $?
     fi
 else
-    popd
+    exit $?
 fi
+popd
