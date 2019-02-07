@@ -93,7 +93,9 @@ set(AWS_MODULES core s3)
 set(AWS_TARGETS)
 foreach(MODULE ${AWS_MODULES})
   find_package(aws-cpp-sdk-${MODULE} REQUIRED CONFIG
-    PATHS "thirdparty/build/bin/aws-sdk-cpp/lib/cmake/aws-cpp-sdk-${MODULE}")
+    PATHS
+    "thirdparty/build/bin/aws-sdk-cpp/lib/cmake/aws-cpp-sdk-${MODULE}"
+    "thirdparty/build/bin/aws-sdk-cpp/lib64/cmake/aws-cpp-sdk-${MODULE}")
   list(APPEND AWS_TARGETS aws-cpp-sdk-${MODULE})
 endforeach()
 
